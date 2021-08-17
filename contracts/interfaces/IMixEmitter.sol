@@ -1,0 +1,24 @@
+pragma solidity ^0.5.6;
+
+import "./IMix.sol";
+
+interface IMixEmitter {
+
+    event Add(address to, uint256 allocPoint);
+    event Set(uint256 indexed pid, uint256 allocPoint);
+
+    function mix() external view returns (IMix);
+    function emitPerBlock() external view returns (uint256);
+    function startBlock() external view returns (uint256);
+
+    function poolCount() external view returns (uint256);
+    function poolInfo(uint256 pid) external view returns (
+        address to,
+        uint256 allocPoint,
+        uint256 lastEmitBlock
+    );
+    function totalAllocPoint() external view returns (uint256);
+
+    function pendingMix(uint256 pid) external view returns (uint256);
+    function updatePool(uint256 pid) external;
+}
