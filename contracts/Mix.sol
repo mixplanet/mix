@@ -3,9 +3,10 @@ pragma solidity ^0.5.6;
 import "./interfaces/IMix.sol";
 import "./interfaces/IMixEmitter.sol";
 import "./klaytn-contracts/token/KIP7/KIP7.sol";
+import "./klaytn-contracts/token/KIP7/KIP7Burnable.sol";
 import "./klaytn-contracts/token/KIP7/KIP7Metadata.sol";
 
-contract Mix is IMix, KIP7, KIP7Metadata("DOGESOUNDCLUB MIX", "$MIX", 18) {
+contract Mix is IMix, KIP7, KIP7Burnable, KIP7Metadata("DOGESOUNDCLUB MIX", "$MIX", 18) {
 
     IMixEmitter public emitter;
     
