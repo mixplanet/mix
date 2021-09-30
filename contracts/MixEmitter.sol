@@ -52,7 +52,6 @@ contract MixEmitter is Ownable, IMixEmitter {
             return;
         }
         uint256 amount = block.number.sub(_lastEmitBlock).mul(emitPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
-        mix.mint(owner(), amount.div(10));
         mix.mint(pool.to, amount);
         pool.lastEmitBlock = block.number;
     }

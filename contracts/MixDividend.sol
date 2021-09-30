@@ -11,7 +11,7 @@ contract MixDividend is IMixDividend {
     using SignedSafeMath for int256;
 
     IMixEmitter private mixEmitter;
-    IMix private mix;
+    IMix internal mix;
     uint256 private pid;
 
     constructor(
