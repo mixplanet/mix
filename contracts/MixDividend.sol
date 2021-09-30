@@ -25,7 +25,7 @@ contract MixDividend is IMixDividend {
     }
 
     uint256 internal currentBalance = 0;
-    uint256 internal totalShare = 0;
+    uint256 internal totalShares = 0;
     mapping(address => uint256) internal shares;
 
     uint256 constant internal pointsMultiplier = 2**128;
@@ -34,12 +34,12 @@ contract MixDividend is IMixDividend {
     mapping(address => uint256) internal claimed;
 
     function updateBalance() internal {
-        if (totalShare > 0) {
+        if (totalShares > 0) {
             mixEmitter.updatePool(pid);
             uint256 balance = mix.balanceOf(address(this));
             uint256 value = balance.sub(currentBalance);
             if (value > 0) {
-                pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(totalShare));
+                pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(totalShares));
                 emit Distribute(msg.sender, value);
             }
             currentBalance = balance;
@@ -52,11 +52,11 @@ contract MixDividend is IMixDividend {
 
     function accumulativeOf(address owner) public view returns (uint256) {
         uint256 _pointsPerShare = pointsPerShare;
-        if (totalShare > 0) {
+        if (totalShares > 0) {
             uint256 balance = mixEmitter.pendingMix(pid).add(mix.balanceOf(address(this)));
             uint256 value = balance.sub(currentBalance);
             if (value > 0) {
-                _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(totalShare));
+                _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(totalShares));
             }
             return uint256(int256(_pointsPerShare.mul(shares[owner])).add(pointsCorrection[owner])).div(pointsMultiplier);
         }
@@ -88,14 +88,14 @@ contract MixDividend is IMixDividend {
 
     function _addShare(uint256 share) internal {
         updateBalance();
-        totalShare = totalShare.add(share);
+        totalShares = totalShares.add(share);
         shares[msg.sender] = shares[msg.sender].add(share);
         pointsCorrection[msg.sender] = pointsCorrection[msg.sender].sub(int256(pointsPerShare.mul(share)));
     }
 
     function _subShare(uint256 share) internal {
         updateBalance();
-        totalShare = totalShare.sub(share);
+        totalShares = totalShares.sub(share);
         shares[msg.sender] = shares[msg.sender].sub(share);
         pointsCorrection[msg.sender] = pointsCorrection[msg.sender].add(int256(pointsPerShare.mul(share)));
     }

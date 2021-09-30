@@ -36,13 +36,13 @@ contract KIP17Dividend is IKIP17Dividend {
     mapping(uint256 => uint256) internal claimed;
 
     function updateBalance() internal {
-        uint256 totalSupply = nft.totalSupply();
-        if (totalSupply > 0) {
+        uint256 totalShares = nft.totalSupply();
+        if (totalShares > 0) {
             mixEmitter.updatePool(pid);
             uint256 balance = mix.balanceOf(address(this));
             uint256 value = balance.sub(currentBalance);
             if (value > 0) {
-                pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(totalSupply));
+                pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(totalShares));
                 emit Distribute(msg.sender, value);
             }
             currentBalance = balance;
@@ -55,12 +55,12 @@ contract KIP17Dividend is IKIP17Dividend {
 
     function accumulativeOf(uint256 id) public view returns (uint256) {
         uint256 _pointsPerShare = pointsPerShare;
-        uint256 totalSupply = nft.totalSupply();
-        if (totalSupply > 0) {
+        uint256 totalShares = nft.totalSupply();
+        if (totalShares > 0) {
             uint256 balance = mixEmitter.pendingMix(pid).add(mix.balanceOf(address(this)));
             uint256 value = balance.sub(currentBalance);
             if (value > 0) {
-                _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(totalSupply));
+                _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(totalShares));
             }
             return uint256(int256(_pointsPerShare).add(pointsCorrection[id])).div(pointsMultiplier);
         }

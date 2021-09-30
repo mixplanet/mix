@@ -3,7 +3,6 @@ pragma solidity ^0.5.6;
 import "./klaytn-contracts/ownership/Ownable.sol";
 import "./klaytn-contracts/math/SafeMath.sol";
 import "./interfaces/IMixEmitter.sol";
-import "./Mix.sol";
 
 contract MixEmitter is Ownable, IMixEmitter {
     using SafeMath for uint256;
@@ -24,8 +23,8 @@ contract MixEmitter is Ownable, IMixEmitter {
 
     bool public started = false;
 
-    constructor(uint256 _emitPerBlock) public {
-        mix = new Mix();
+    constructor(IMix _mix, uint256 _emitPerBlock) public {
+        mix = _mix;
         emitPerBlock = _emitPerBlock;
     }
 
