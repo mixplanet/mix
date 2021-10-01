@@ -6,13 +6,13 @@ interface IKIP7StakingPool {
     event Unstake(address indexed owner, uint256 amount);
 
     event Distribute(address indexed by, uint256 distributed);
-    event Claim(uint256 indexed id, uint256 claimed);
+    event Claim(address indexed to, uint256 claimed);
 
     function stake(uint256 amount) external;
     function unstake(uint256 amount) external;
 
-    function accumulativeOf(uint256 id) external view returns (uint256);
-    function claimedOf(uint256 id) external view returns (uint256);
-    function claimableOf(uint256 id) external view returns (uint256);
-    function claim(uint256 id) external;
+    function accumulativeOf(address owner) external view returns (uint256);
+    function claimedOf(address owner) external view returns (uint256);
+    function claimableOf(address owner) external view returns (uint256);
+    function claim() external;
 }

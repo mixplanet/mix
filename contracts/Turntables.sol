@@ -76,6 +76,14 @@ contract Turntables is Ownable, ITurntables, MixDividend {
         return turntables.length;
     }
 
+    function ownerOf(uint256 turntableId) external returns (address) {
+        return turntables[turntableId].owner;
+    }
+
+    function exists(uint256 turntableId) external returns (bool) {
+        return turntables[turntableId].owner != address(0);
+    }
+
     function destroy(uint256 turntableId) external {
         Turntable memory turntable = turntables[turntableId];
         require(turntable.owner == msg.sender);

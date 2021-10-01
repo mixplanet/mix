@@ -8,5 +8,5 @@ interface IKIP17Dividend {
     function accumulativeOf(uint256 id) external view returns (uint256);
     function claimedOf(uint256 id) external view returns (uint256);
     function claimableOf(uint256 id) external view returns (uint256);
-    function claim(uint256 id) external;
+    function claim(uint256[] calldata ids) external;
 }

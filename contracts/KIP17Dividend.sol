@@ -79,15 +79,21 @@ contract KIP17Dividend is IKIP17Dividend {
         return _accumulativeOf(id).sub(claimed[id]);
     }
 
-    function claim(uint256 id) external {
-        require(nft.ownerOf(id) == msg.sender);
+    function claim(uint256[] calldata ids) external {
         updateBalance();
-        uint256 claimable = _claimableOf(id);
-        if (claimable > 0) {
-            claimed[id] = claimed[id].add(claimable);
-            emit Claim(id, claimable);
-            mix.transfer(msg.sender, claimable);
-            currentBalance = currentBalance.sub(claimable);
+        uint256 length = ids.length;
+        uint256 totalClaimable = 0;
+        for (uint256 i = 0; i < length; i = i.add(1)) {
+            uint256 id = ids[i];
+            require(nft.ownerOf(id) == msg.sender);
+            uint256 claimable = _claimableOf(id);
+            if (claimable > 0) {
+                claimed[id] = claimed[id].add(claimable);
+                emit Claim(id, claimable);
+                mix.transfer(msg.sender, claimable);
+                totalClaimable = totalClaimable.add(claimable);
+            }
         }
+        currentBalance = currentBalance.sub(totalClaimable);
     }
 }
