@@ -117,7 +117,12 @@ contract TurntableKIP17Listeners is ITurntableKIP17Listeners {
         totalShares = totalShares.add(length);
         for (uint256 i = 0; i < length; i = i.add(1)) {
             uint256 id = ids[i];
-            require(nft.ownerOf(id) == msg.sender && listening[id] != true);
+            require(nft.ownerOf(id) == msg.sender);
+            if (listening[id] == true) {
+                uint256 originTo = listeningTo[id];
+                shares[originTo][id] = shares[originTo][id].sub(1);
+                pointsCorrection[originTo][id] = pointsCorrection[originTo][id].add(int256(pointsPerShare));
+            }
             shares[turntableId][id] = shares[turntableId][id].add(1);
             pointsCorrection[turntableId][id] = pointsCorrection[turntableId][id].sub(int256(pointsPerShare));
             listeningTo[id] = turntableId;

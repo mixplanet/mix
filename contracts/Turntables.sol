@@ -87,6 +87,7 @@ contract Turntables is Ownable, ITurntables, MixDividend {
     function destroy(uint256 turntableId) external {
         Turntable memory turntable = turntables[turntableId];
         require(turntable.owner == msg.sender);
+        claim(turntableId);
         Type memory _type = types[turntable.typeId];
         _subShare(_type.volume);
         mix.transfer(msg.sender, _type.destroyReturn);
