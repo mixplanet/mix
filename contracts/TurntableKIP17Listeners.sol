@@ -41,12 +41,13 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
     mapping(uint256 => uint256) private listeningTo;
     mapping(uint256 => bool) private listening;
 
-    uint256 constant private pointsMultiplier = 2**128;
+    uint256 private constant pointsMultiplier = 2**128;
     uint256 private pointsPerShare = 0;
     mapping(uint256 => mapping(uint256 => int256)) private pointsCorrection;
     mapping(uint256 => mapping(uint256 => uint256)) private claimed;
 
-    function setTurntableFee(uint256 fee) onlyOwner external {
+    function setTurntableFee(uint256 fee) external onlyOwner {
+        require(fee < 1e4);
         turntableFee = fee;
     }
 
@@ -75,17 +76,23 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
             if (value > 0) {
                 _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(totalShares));
             }
-            return uint256(int256(_pointsPerShare.mul(shares[turntableId][id])).add(pointsCorrection[turntableId][id])).div(pointsMultiplier);
+            return
+                uint256(int256(_pointsPerShare.mul(shares[turntableId][id])).add(pointsCorrection[turntableId][id]))
+                    .div(pointsMultiplier);
         }
         return 0;
     }
 
     function claimableOf(uint256 turntableId, uint256 id) external view returns (uint256) {
-        return accumulativeOf(turntableId, id).sub(claimed[turntableId][id]).mul(uint256(1e4).sub(turntableFee)).div(1e4);
+        return
+            accumulativeOf(turntableId, id).sub(claimed[turntableId][id]).mul(uint256(1e4).sub(turntableFee)).div(1e4);
     }
 
     function _accumulativeOf(uint256 turntableId, uint256 id) private view returns (uint256) {
-        return uint256(int256(pointsPerShare.mul(shares[turntableId][id])).add(pointsCorrection[turntableId][id])).div(pointsMultiplier);
+        return
+            uint256(int256(pointsPerShare.mul(shares[turntableId][id])).add(pointsCorrection[turntableId][id])).div(
+                pointsMultiplier
+            );
     }
 
     function _claimableOf(uint256 turntableId, uint256 id) private view returns (uint256) {
@@ -96,7 +103,7 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
         updateBalance();
         uint256 length = ids.length;
         uint256 totalClaimable = 0;
-        for (uint256 i = 0; i < length; i = i.add(1)) {
+        for (uint256 i = 0; i < length; i = i + 1) {
             uint256 claimable = _claim(turntableId, ids[i]);
             totalClaimable = totalClaimable.add(claimable);
         }
@@ -104,13 +111,13 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
     }
 
     function _claim(uint256 turntableId, uint256 id) internal returns (uint256 claimable) {
-        require(nft.ownerOf(id) == msg.sender && listening[id] == true && listeningTo[id] == turntableId);
+        require(nft.ownerOf(id) == msg.sender && listening[id] && listeningTo[id] == turntableId);
         claimable = _claimableOf(turntableId, id);
         if (claimable > 0) {
             claimed[turntableId][id] = claimed[turntableId][id].add(claimable);
             emit Claim(turntableId, id, claimable);
             uint256 fee = claimable.mul(turntableFee).div(1e4);
-            if (turntables.exists(turntableId) == true) {
+            if (turntables.exists(turntableId)) {
                 mix.transfer(turntables.ownerOf(turntableId), fee);
             } else {
                 mix.burn(fee);
@@ -123,17 +130,17 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
         updateBalance();
         uint256 length = ids.length;
         totalShares = totalShares.add(length);
-        for (uint256 i = 0; i < length; i = i.add(1)) {
+        for (uint256 i = 0; i < length; i = i + 1) {
             uint256 id = ids[i];
             require(nft.ownerOf(id) == msg.sender);
-            if (listening[id] == true) {
+            if (listening[id] && listeningTo[id] != turntableId) {
                 uint256 originTo = listeningTo[id];
                 _claim(originTo, id);
-                shares[originTo][id] = shares[originTo][id].sub(1);
+                shares[originTo][id] = 0;
                 pointsCorrection[originTo][id] = pointsCorrection[originTo][id].add(int256(pointsPerShare));
                 emit Unlisten(originTo, msg.sender, id);
             }
-            shares[turntableId][id] = shares[turntableId][id].add(1);
+            shares[turntableId][id] = 1;
             pointsCorrection[turntableId][id] = pointsCorrection[turntableId][id].sub(int256(pointsPerShare));
             listeningTo[id] = turntableId;
             listening[id] = true;
@@ -145,10 +152,10 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
         updateBalance();
         uint256 length = ids.length;
         totalShares = totalShares.sub(length);
-        for (uint256 i = 0; i < length; i = i.add(1)) {
+        for (uint256 i = 0; i < length; i = i + 1) {
             uint256 id = ids[i];
             _claim(turntableId, id);
-            shares[turntableId][id] = shares[turntableId][id].sub(1);
+            shares[turntableId][id] = 0;
             pointsCorrection[turntableId][id] = pointsCorrection[turntableId][id].add(int256(pointsPerShare));
             delete listeningTo[id];
             delete listening[id];

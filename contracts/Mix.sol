@@ -17,20 +17,20 @@ contract Mix is Ownable, IMix, KIP7, KIP7Burnable, KIP7Metadata("DSC Mix", "MIX"
     address public emitter;
     address public booth;
 
-    function setEmitter(address _emitter) onlyOwner external {
+    function setEmitter(address _emitter) external onlyOwner {
         emitter = _emitter;
     }
 
-    function setBooth(address _booth) onlyOwner external {
+    function setBooth(address _booth) external onlyOwner {
         booth = _booth;
     }
 
-    modifier onlyEmitter {
+    modifier onlyEmitter() {
         require(msg.sender == emitter);
         _;
     }
 
-    function mint(address to, uint256 amount) onlyEmitter external {
+    function mint(address to, uint256 amount) external onlyEmitter {
         _mint(to, amount);
     }
 

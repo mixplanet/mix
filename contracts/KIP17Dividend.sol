@@ -33,7 +33,7 @@ contract KIP17Dividend is IKIP17Dividend {
 
     uint256 internal currentBalance = 0;
 
-    uint256 constant internal pointsMultiplier = 2**128;
+    uint256 internal constant pointsMultiplier = 2**128;
     uint256 internal pointsPerShare = 0;
     mapping(uint256 => uint256) internal claimed;
 
@@ -83,7 +83,7 @@ contract KIP17Dividend is IKIP17Dividend {
     function claim(uint256[] calldata ids) external returns (uint256 totalClaimable) {
         updateBalance();
         uint256 length = ids.length;
-        for (uint256 i = 0; i < length; i = i.add(1)) {
+        for (uint256 i = 0; i < length; i = i + 1) {
             uint256 id = ids[i];
             require(id < maxNFTSupply && nft.ownerOf(id) == msg.sender);
             uint256 claimable = _claimableOf(id);
@@ -93,9 +93,8 @@ contract KIP17Dividend is IKIP17Dividend {
                 totalClaimable = totalClaimable.add(claimable);
             }
         }
-        uint256 prepayment = totalClaimable.div(10);
-        mix.transferFrom(msg.sender, address(this), prepayment);
-        mix.transfer(msg.sender, totalClaimable.add(prepayment));
+        mix.burnFrom(msg.sender, totalClaimable.div(10));
+        mix.transfer(msg.sender, totalClaimable);
         currentBalance = currentBalance.sub(totalClaimable);
     }
 }
