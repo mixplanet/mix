@@ -52,6 +52,7 @@ interface ITurntables {
     function charge(uint256 turntableId, uint256 amount) external;
     function destroy(uint256 turntableId) external;
 
+    function pid() external view returns (uint256);
     function accumulativeOf(uint256 turntableId) external view returns (uint256);
     function claimedOf(uint256 turntableId) external view returns (uint256);
     function claimableOf(uint256 turntableId) external view returns (uint256);

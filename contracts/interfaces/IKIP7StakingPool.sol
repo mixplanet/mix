@@ -11,6 +11,9 @@ interface IKIP7StakingPool {
     function stake(uint256 amount) external;
     function unstake(uint256 amount) external;
 
+    function pid() external view returns (uint256);
+    function shares(address owner) external view returns (uint256);
+
     function accumulativeOf(address owner) external view returns (uint256);
     function claimedOf(address owner) external view returns (uint256);
     function claimableOf(address owner) external view returns (uint256);

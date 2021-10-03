@@ -30,7 +30,7 @@ contract KIP7StakingPool is IKIP7StakingPool {
 
     uint256 internal currentBalance = 0;
     uint256 internal totalShares = 0;
-    mapping(address => uint256) internal shares;
+    mapping(address => uint256) public shares;
 
     uint256 internal constant pointsMultiplier = 2**128;
     uint256 internal pointsPerShare = 0;

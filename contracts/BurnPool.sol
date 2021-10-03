@@ -1,16 +1,27 @@
 pragma solidity ^0.5.6;
 
+import "./interfaces/IMixEmitter.sol";
 import "./interfaces/IMix.sol";
 import "./interfaces/IBurnPool.sol";
 
 contract BurnPool is IBurnPool {
-    IMix public mix;
 
-    constructor(IMix _mix) public {
+    IMixEmitter public mixEmitter;
+    IMix public mix;
+    uint256 public pid;
+
+    constructor(
+        IMixEmitter _mixEmitter,
+        IMix _mix,
+        uint256 _pid
+    ) public {
+        mixEmitter = _mixEmitter;
         mix = _mix;
+        pid = _pid;
     }
 
     function burn() external {
+        mixEmitter.updatePool(pid);
         mix.burn(mix.balanceOf(address(this)));
     }
 }
