@@ -124,7 +124,7 @@ contract Turntables is Ownable, ITurntables {
         require(turntable.owner == msg.sender);
         Type memory _type = types[turntable.typeId];
 
-        uint256 chagedLifetime = _type.lifetime.mul(amount).mul(chargingEfficiency).div(100).div(_type.volume);
+        uint256 chagedLifetime = _type.lifetime.mul(amount).mul(chargingEfficiency).div(100).div(_type.price);
         uint256 oldEndBlock = turntable.endBlock;
         turntable.endBlock = (block.number < oldEndBlock ? oldEndBlock : block.number).add(chagedLifetime);
     
