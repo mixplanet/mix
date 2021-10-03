@@ -93,9 +93,8 @@ contract KIP17Dividend is IKIP17Dividend {
                 totalClaimable = totalClaimable.add(claimable);
             }
         }
-        uint256 prepayment = totalClaimable.div(10);
-        mix.transferFrom(msg.sender, address(this), prepayment);
-        mix.transfer(msg.sender, totalClaimable.add(prepayment));
+        mix.burnFrom(msg.sender, totalClaimable.div(10));
+        mix.transfer(msg.sender, totalClaimable);
         currentBalance = currentBalance.sub(totalClaimable);
     }
 }
