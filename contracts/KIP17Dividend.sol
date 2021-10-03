@@ -79,10 +79,9 @@ contract KIP17Dividend is IKIP17Dividend {
         return _accumulativeOf(id).sub(claimed[id]);
     }
 
-    function claim(uint256[] calldata ids) external {
+    function claim(uint256[] calldata ids) external returns (uint256 totalClaimable) {
         updateBalance();
         uint256 length = ids.length;
-        uint256 totalClaimable = 0;
         for (uint256 i = 0; i < length; i = i.add(1)) {
             uint256 id = ids[i];
             require(nft.ownerOf(id) == msg.sender);
@@ -90,10 +89,12 @@ contract KIP17Dividend is IKIP17Dividend {
             if (claimable > 0) {
                 claimed[id] = claimed[id].add(claimable);
                 emit Claim(id, claimable);
-                mix.transfer(msg.sender, claimable);
                 totalClaimable = totalClaimable.add(claimable);
             }
         }
+        uint256 prepayment = totalClaimable.div(10);
+        mix.transferFrom(msg.sender, address(this), prepayment);
+        mix.transfer(msg.sender, totalClaimable.add(prepayment));
         currentBalance = currentBalance.sub(totalClaimable);
     }
 }
