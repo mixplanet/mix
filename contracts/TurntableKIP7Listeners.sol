@@ -95,14 +95,14 @@ contract TurntableKIP7Listeners is Ownable, ITurntableKIP7Listeners {
         updateBalance();
         uint256 length = turntableIds.length;
         uint256 totalClaimable = 0;
-        for (uint256 i = 0; i < length; i = i.add(1)) {
+        for (uint256 i = 0; i < length; i = i + 1) {
             uint256 turntableId = turntableIds[i];
             uint256 claimable = _claimableOf(turntableId, msg.sender);
             if (claimable > 0) {
                 claimed[turntableId][msg.sender] = claimed[turntableId][msg.sender].add(claimable);
                 emit Claim(turntableId, msg.sender, claimable);
                 uint256 fee = claimable.mul(turntableFee).div(1e4);
-                if (turntables.exists(turntableId) == true) {
+                if (turntables.exists(turntableId)) {
                     mix.transfer(turntables.ownerOf(turntableId), fee);
                 } else {
                     mix.burn(fee);

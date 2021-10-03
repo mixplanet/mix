@@ -58,7 +58,7 @@ contract MixEmitter is Ownable, IMixEmitter {
 
     function massUpdatePools() internal {
         uint256 length = poolInfo.length;
-        for (uint256 pid = 0; pid < length; pid = pid.add(1)) {
+        for (uint256 pid = 0; pid < length; pid = pid + 1) {
             updatePool(pid);
         }
     }
@@ -69,7 +69,7 @@ contract MixEmitter is Ownable, IMixEmitter {
         poolInfo.push(PoolInfo({
             to: to,
             allocPoint: allocPoint,
-            lastEmitBlock: started == true ? block.number : uint256(-1)
+            lastEmitBlock: started ? block.number : uint256(-1)
         }));
         emit Add(to, allocPoint);
     }
@@ -82,9 +82,9 @@ contract MixEmitter is Ownable, IMixEmitter {
     }
 
     function start() external onlyOwner {
-        require(started == false);
+        require(!started);
         uint256 length = poolInfo.length;
-        for (uint256 pid = 0; pid < length; pid = pid.add(1)) {
+        for (uint256 pid = 0; pid < length; pid = pid + 1) {
             poolInfo[pid].lastEmitBlock = block.number;
         }
         started = true;

@@ -83,7 +83,7 @@ contract Turntables is Ownable, ITurntables {
     }
 
     function buy(uint256 typeId) external returns (uint256 turntableId) {
-        require(typeWhitelist[typeId] == true);
+        require(typeWhitelist[typeId]);
         Type memory _type = types[typeId];
         turntableId = turntables.length;
         turntables.push(Turntable({
@@ -188,7 +188,7 @@ contract Turntables is Ownable, ITurntables {
         
         uint256 toBurn = 0;
         uint256 length = turntableIds.length;
-        for (uint256 i = 0; i < length; i = i.add(1)) {
+        for (uint256 i = 0; i < length; i = i + 1) {
             uint256 turntableId = turntableIds[i];
             require(ownerOf(turntableId) == msg.sender);
             uint256 claimable = _claimableOf(turntableId);
