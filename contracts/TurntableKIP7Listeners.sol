@@ -45,6 +45,7 @@ contract TurntableKIP7Listeners is Ownable, ITurntableKIP7Listeners {
     mapping(uint256 => mapping(address => uint256)) private claimed;
 
     function setTurntableFee(uint256 fee) onlyOwner external {
+        require(fee < 1e4);
         turntableFee = fee;
     }
 
