@@ -15,17 +15,20 @@ contract KIP17Dividend is IKIP17Dividend {
     IMix public mix;
     uint256 public pid;
     IKIP17Enumerable public nft;
+    uint256 public maxNFTSupply;
 
     constructor(
         IMixEmitter _mixEmitter,
         IMix _mix,
         uint256 _pid,
-        IKIP17Enumerable _nft
+        IKIP17Enumerable _nft,
+        uint256 _maxNFTSupply
     ) public {
         mixEmitter = _mixEmitter;
         mix = _mix;
         pid = _pid;
         nft = _nft;
+        maxNFTSupply = _maxNFTSupply;
     }
 
     uint256 internal currentBalance = 0;
@@ -35,13 +38,12 @@ contract KIP17Dividend is IKIP17Dividend {
     mapping(uint256 => uint256) internal claimed;
 
     function updateBalance() internal {
-        uint256 totalShares = nft.totalSupply();
-        if (totalShares > 0) {
+        if (maxNFTSupply > 0) {
             mixEmitter.updatePool(pid);
             uint256 balance = mix.balanceOf(address(this));
             uint256 value = balance.sub(currentBalance);
             if (value > 0) {
-                pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(totalShares));
+                pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(maxNFTSupply));
                 emit Distribute(msg.sender, value);
             }
             currentBalance = balance;
@@ -54,12 +56,11 @@ contract KIP17Dividend is IKIP17Dividend {
 
     function accumulativeOf() public view returns (uint256) {
         uint256 _pointsPerShare = pointsPerShare;
-        uint256 totalShares = nft.totalSupply();
-        if (totalShares > 0) {
+        if (maxNFTSupply > 0) {
             uint256 balance = mixEmitter.pendingMix(pid).add(mix.balanceOf(address(this)));
             uint256 value = balance.sub(currentBalance);
             if (value > 0) {
-                _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(totalShares));
+                _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(maxNFTSupply));
             }
             return uint256(int256(_pointsPerShare)).div(pointsMultiplier);
         }
@@ -67,6 +68,7 @@ contract KIP17Dividend is IKIP17Dividend {
     }
 
     function claimableOf(uint256 id) external view returns (uint256) {
+        require(id < maxNFTSupply);
         return accumulativeOf().sub(claimed[id]);
     }
 
@@ -83,7 +85,7 @@ contract KIP17Dividend is IKIP17Dividend {
         uint256 length = ids.length;
         for (uint256 i = 0; i < length; i = i.add(1)) {
             uint256 id = ids[i];
-            require(nft.ownerOf(id) == msg.sender);
+            require(id < maxNFTSupply && nft.ownerOf(id) == msg.sender);
             uint256 claimable = _claimableOf(id);
             if (claimable > 0) {
                 claimed[id] = claimed[id].add(claimable);
