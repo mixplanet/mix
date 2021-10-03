@@ -8,7 +8,7 @@ contract MixEmitter is Ownable, IMixEmitter {
     using SafeMath for uint256;
 
     uint256 private constant PRECISION = 1e20;
-    
+
     struct PoolInfo {
         address to;
         uint256 allocPoint;
@@ -31,7 +31,7 @@ contract MixEmitter is Ownable, IMixEmitter {
     function poolCount() external view returns (uint256) {
         return poolInfo.length;
     }
-    
+
     function pendingMix(uint256 pid) external view returns (uint256) {
         PoolInfo memory pool = poolInfo[pid];
         uint256 _lastEmitBlock = pool.lastEmitBlock;
@@ -66,11 +66,7 @@ contract MixEmitter is Ownable, IMixEmitter {
     function add(address to, uint256 allocPoint) external onlyOwner {
         massUpdatePools();
         totalAllocPoint = totalAllocPoint.add(allocPoint);
-        poolInfo.push(PoolInfo({
-            to: to,
-            allocPoint: allocPoint,
-            lastEmitBlock: started ? block.number : uint256(-1)
-        }));
+        poolInfo.push(PoolInfo({to: to, allocPoint: allocPoint, lastEmitBlock: started ? block.number : uint256(-1)}));
         emit Add(to, allocPoint);
     }
 

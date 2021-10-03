@@ -32,7 +32,7 @@ contract KIP7StakingPool is IKIP7StakingPool {
     uint256 internal totalShares = 0;
     mapping(address => uint256) internal shares;
 
-    uint256 constant internal pointsMultiplier = 2**128;
+    uint256 internal constant pointsMultiplier = 2**128;
     uint256 internal pointsPerShare = 0;
     mapping(address => int256) internal pointsCorrection;
     mapping(address => uint256) internal claimed;
@@ -62,7 +62,8 @@ contract KIP7StakingPool is IKIP7StakingPool {
             if (value > 0) {
                 _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(totalShares));
             }
-            return uint256(int256(_pointsPerShare.mul(shares[owner])).add(pointsCorrection[owner])).div(pointsMultiplier);
+            return
+                uint256(int256(_pointsPerShare.mul(shares[owner])).add(pointsCorrection[owner])).div(pointsMultiplier);
         }
         return 0;
     }

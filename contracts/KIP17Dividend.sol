@@ -33,7 +33,7 @@ contract KIP17Dividend is IKIP17Dividend {
 
     uint256 internal currentBalance = 0;
 
-    uint256 constant internal pointsMultiplier = 2**128;
+    uint256 internal constant pointsMultiplier = 2**128;
     uint256 internal pointsPerShare = 0;
     mapping(uint256 => uint256) internal claimed;
 

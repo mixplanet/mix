@@ -41,12 +41,12 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
     mapping(uint256 => uint256) private listeningTo;
     mapping(uint256 => bool) private listening;
 
-    uint256 constant private pointsMultiplier = 2**128;
+    uint256 private constant pointsMultiplier = 2**128;
     uint256 private pointsPerShare = 0;
     mapping(uint256 => mapping(uint256 => int256)) private pointsCorrection;
     mapping(uint256 => mapping(uint256 => uint256)) private claimed;
 
-    function setTurntableFee(uint256 fee) onlyOwner external {
+    function setTurntableFee(uint256 fee) external onlyOwner {
         require(fee < 1e4);
         turntableFee = fee;
     }
@@ -76,17 +76,23 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
             if (value > 0) {
                 _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(totalShares));
             }
-            return uint256(int256(_pointsPerShare.mul(shares[turntableId][id])).add(pointsCorrection[turntableId][id])).div(pointsMultiplier);
+            return
+                uint256(int256(_pointsPerShare.mul(shares[turntableId][id])).add(pointsCorrection[turntableId][id]))
+                    .div(pointsMultiplier);
         }
         return 0;
     }
 
     function claimableOf(uint256 turntableId, uint256 id) external view returns (uint256) {
-        return accumulativeOf(turntableId, id).sub(claimed[turntableId][id]).mul(uint256(1e4).sub(turntableFee)).div(1e4);
+        return
+            accumulativeOf(turntableId, id).sub(claimed[turntableId][id]).mul(uint256(1e4).sub(turntableFee)).div(1e4);
     }
 
     function _accumulativeOf(uint256 turntableId, uint256 id) private view returns (uint256) {
-        return uint256(int256(pointsPerShare.mul(shares[turntableId][id])).add(pointsCorrection[turntableId][id])).div(pointsMultiplier);
+        return
+            uint256(int256(pointsPerShare.mul(shares[turntableId][id])).add(pointsCorrection[turntableId][id])).div(
+                pointsMultiplier
+            );
     }
 
     function _claimableOf(uint256 turntableId, uint256 id) private view returns (uint256) {

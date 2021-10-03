@@ -29,11 +29,11 @@ contract Turntables is Ownable, ITurntables {
     uint256 internal currentBalance = 0;
     uint256 internal totalVolume = 0;
 
-    uint256 constant internal pointsMultiplier = 2**128;
+    uint256 internal constant pointsMultiplier = 2**128;
     uint256 internal pointsPerShare = 0;
     mapping(uint256 => int256) internal pointsCorrection;
     mapping(uint256 => uint256) internal claimed;
-    
+
     struct Type {
         uint256 price;
         uint256 destroyReturn;
@@ -56,15 +56,10 @@ contract Turntables is Ownable, ITurntables {
         uint256 destroyReturn,
         uint256 volume,
         uint256 lifetime
-    ) onlyOwner external returns (uint256 typeId) {
+    ) external onlyOwner returns (uint256 typeId) {
         require(price >= destroyReturn);
         typeId = types.length;
-        types.push(Type({
-            price: price,
-            destroyReturn: destroyReturn,
-            volume: volume,
-            lifetime: lifetime
-        }));
+        types.push(Type({price: price, destroyReturn: destroyReturn, volume: volume, lifetime: lifetime}));
         emit AddType(price, destroyReturn, volume, lifetime);
     }
 
@@ -72,12 +67,12 @@ contract Turntables is Ownable, ITurntables {
         return types.length;
     }
 
-    function allowType(uint256 typeId) onlyOwner external {
+    function allowType(uint256 typeId) external onlyOwner {
         typeWhitelist[typeId] = true;
         emit AllowType(typeId);
     }
 
-    function denyType(uint256 typeId) onlyOwner external {
+    function denyType(uint256 typeId) external onlyOwner {
         typeWhitelist[typeId] = false;
         emit DenyType(typeId);
     }
@@ -86,13 +81,15 @@ contract Turntables is Ownable, ITurntables {
         require(typeWhitelist[typeId]);
         Type memory _type = types[typeId];
         turntableId = turntables.length;
-        turntables.push(Turntable({
-            owner: msg.sender,
-            typeId: typeId,
-            endBlock: block.number.add(_type.lifetime),
-            lastClaimedBlock: block.number
-        }));
-        
+        turntables.push(
+            Turntable({
+                owner: msg.sender,
+                typeId: typeId,
+                endBlock: block.number.add(_type.lifetime),
+                lastClaimedBlock: block.number
+            })
+        );
+
         updateBalance();
         totalVolume = totalVolume.add(_type.volume);
         pointsCorrection[turntableId] = int256(pointsPerShare.mul(_type.volume)).mul(-1);
@@ -114,14 +111,13 @@ contract Turntables is Ownable, ITurntables {
     }
 
     function destroy(uint256 turntableId) external {
-        
         Turntable memory turntable = turntables[turntableId];
         require(turntable.owner == msg.sender);
 
         uint256[] memory turntableIds = new uint256[](1);
         turntableIds[0] = turntableId;
         claim(turntableIds);
-        
+
         Type memory _type = types[turntable.typeId];
         totalVolume = totalVolume.sub(_type.volume);
         delete pointsCorrection[turntableId];
@@ -158,7 +154,12 @@ contract Turntables is Ownable, ITurntables {
             if (value > 0) {
                 _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(totalVolume));
             }
-            return uint256(int256(_pointsPerShare.mul(types[turntables[turntableId].typeId].volume)).add(pointsCorrection[turntableId])).div(pointsMultiplier);
+            return
+                uint256(
+                    int256(_pointsPerShare.mul(types[turntables[turntableId].typeId].volume)).add(
+                        pointsCorrection[turntableId]
+                    )
+                ).div(pointsMultiplier);
         }
         return 0;
     }
@@ -169,7 +170,10 @@ contract Turntables is Ownable, ITurntables {
         if (turntable.endBlock <= turntable.lastClaimedBlock) {
             return 0;
         } else if (turntable.endBlock < block.number) {
-            return claimable.mul(turntable.endBlock.sub(turntable.lastClaimedBlock)).div(block.number.sub(turntable.lastClaimedBlock));
+            return
+                claimable.mul(turntable.endBlock.sub(turntable.lastClaimedBlock)).div(
+                    block.number.sub(turntable.lastClaimedBlock)
+                );
         } else {
             return claimable;
         }
@@ -185,7 +189,7 @@ contract Turntables is Ownable, ITurntables {
 
     function claim(uint256[] memory turntableIds) public returns (uint256 totalClaimable) {
         updateBalance();
-        
+
         uint256 toBurn = 0;
         uint256 length = turntableIds.length;
         for (uint256 i = 0; i < length; i = i + 1) {
@@ -199,7 +203,9 @@ contract Turntables is Ownable, ITurntables {
                 if (turntable.endBlock <= turntable.lastClaimedBlock) {
                     // ignore.
                 } else if (turntable.endBlock < block.number) {
-                    realClaimable = claimable.mul(turntable.endBlock.sub(turntable.lastClaimedBlock)).div(block.number.sub(turntable.lastClaimedBlock));
+                    realClaimable = claimable.mul(turntable.endBlock.sub(turntable.lastClaimedBlock)).div(
+                        block.number.sub(turntable.lastClaimedBlock)
+                    );
                 } else {
                     realClaimable = claimable;
                 }

@@ -4,7 +4,6 @@ import "./interfaces/IMix.sol";
 import "./interfaces/IBurnPool.sol";
 
 contract BurnPool is IBurnPool {
-
     IMix public mix;
 
     constructor(IMix _mix) public {
