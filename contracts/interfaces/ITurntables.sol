@@ -11,7 +11,10 @@ interface ITurntables {
 
     event AllowType(uint256 indexed typeId);
     event DenyType(uint256 indexed typeId);
+    event ChangeChargingEfficiency(uint256 value);
+
     event Buy(address indexed owner, uint256 indexed turntableId);
+    event Charge(address indexed owner, uint256 indexed turntableId, uint256 amount);
     event Destroy(address indexed owner, uint256 indexed turntableId);
 
     event Distribute(address indexed by, uint256 distributed);
@@ -46,6 +49,7 @@ interface ITurntables {
     function turntableCount() external view returns (uint256);
     function ownerOf(uint256 turntableId) external returns (address);
     function exists(uint256 turntableId) external returns (bool);
+    function charge(uint256 turntableId, uint256 amount) external;
     function destroy(uint256 turntableId) external;
 
     function accumulativeOf(uint256 turntableId) external view returns (uint256);

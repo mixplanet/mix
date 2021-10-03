@@ -51,6 +51,8 @@ contract Turntables is Ownable, ITurntables {
     }
     Turntable[] public turntables;
 
+    uint256 public chargingEfficiency = 200; // 1e2
+
     function addType(
         uint256 price,
         uint256 destroyReturn,
@@ -82,6 +84,11 @@ contract Turntables is Ownable, ITurntables {
         emit DenyType(typeId);
     }
 
+    function setChargingEfficiency(uint256 value) onlyOwner external {
+        chargingEfficiency = value;
+        emit ChangeChargingEfficiency(value);
+    }
+
     function buy(uint256 typeId) external returns (uint256 turntableId) {
         require(typeWhitelist[typeId] == true);
         Type memory _type = types[typeId];
@@ -111,6 +118,20 @@ contract Turntables is Ownable, ITurntables {
 
     function exists(uint256 turntableId) external returns (bool) {
         return turntables[turntableId].owner != address(0);
+    }
+
+    function charge(uint256 turntableId, uint256 amount) external {
+        require(amount > 0);
+
+        Turntable storage turntable = turntables[turntableId];
+        Type memory _type = types[turntable.typeId];
+
+        uint256 chagedLifetime = _type.lifetime.mul(amount).mul(chargingEfficiency).div(100).div(_type.volume);
+        uint256 oldEndBlock = turntable.endBlock;
+        turntable.endBlock = (block.number < oldEndBlock ? oldEndBlock : block.number).add(chagedLifetime);
+    
+        mix.burnFrom(msg.sender, amount);
+        emit Charge(msg.sender, turntableId, amount);
     }
 
     function destroy(uint256 turntableId) external {
