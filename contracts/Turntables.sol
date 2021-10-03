@@ -204,8 +204,8 @@ contract Turntables is Ownable, ITurntables {
                     realClaimable = claimable;
                 }
 
+                toBurn = toBurn.add(claimable.sub(realClaimable));
                 if (realClaimable > 0) {
-                    toBurn = toBurn.add(claimable.sub(realClaimable));
                     claimed[turntableId] = claimed[turntableId].add(realClaimable);
                     emit Claim(turntableId, realClaimable);
                     totalClaimable = totalClaimable.add(realClaimable);
