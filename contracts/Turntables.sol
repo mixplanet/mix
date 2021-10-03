@@ -121,6 +121,7 @@ contract Turntables is Ownable, ITurntables {
         require(amount > 0);
 
         Turntable storage turntable = turntables[turntableId];
+        require(turntable.owner == msg.sender);
         Type memory _type = types[turntable.typeId];
 
         uint256 chagedLifetime = _type.lifetime.mul(amount).mul(chargingEfficiency).div(100).div(_type.volume);
