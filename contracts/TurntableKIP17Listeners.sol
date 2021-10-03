@@ -35,7 +35,7 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
 
     uint256 private currentBalance = 0;
     uint256 private totalShares = 0;
-    mapping(uint256 => mapping(uint256 => uint256)) private shares;
+    mapping(uint256 => mapping(uint256 => uint256)) public shares;
 
     uint256 private turntableFee = 300; // 1e4
     mapping(uint256 => uint256) private listeningTo;
