@@ -3,9 +3,6 @@ import { Mix, MixEmitter, Booth } from "../typechain";
 import { ethers } from "hardhat";
 import { expect } from "chai";
 
-const { constants, BigNumber } = ethers;
-const { AddressZero } = constants;
-
 const setupTest = async () => {
     const signers = await ethers.getSigners();
     const [deployer, alice, bob, carol] = signers;
