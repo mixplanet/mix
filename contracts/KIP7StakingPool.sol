@@ -18,12 +18,11 @@ contract KIP7StakingPool is IKIP7StakingPool {
 
     constructor(
         IMixEmitter _mixEmitter,
-        IMix _mix,
         uint256 _pid,
         IKIP7 _token
     ) public {
         mixEmitter = _mixEmitter;
-        mix = _mix;
+        mix = _mixEmitter.mix();
         pid = _pid;
         token = _token;
     }

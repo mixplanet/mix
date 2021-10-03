@@ -19,13 +19,12 @@ contract KIP17Dividend is IKIP17Dividend {
 
     constructor(
         IMixEmitter _mixEmitter,
-        IMix _mix,
         uint256 _pid,
         IKIP17Enumerable _nft,
         uint256 _maxNFTSupply
     ) public {
         mixEmitter = _mixEmitter;
-        mix = _mix;
+        mix = _mixEmitter.mix();
         pid = _pid;
         nft = _nft;
         maxNFTSupply = _maxNFTSupply;

@@ -21,13 +21,12 @@ contract TurntableKIP7Listeners is Ownable, ITurntableKIP7Listeners {
 
     constructor(
         IMixEmitter _mixEmitter,
-        IMix _mix,
         uint256 _pid,
         ITurntables _turntables,
         IKIP7 _token
     ) public {
         mixEmitter = _mixEmitter;
-        mix = _mix;
+        mix = _mixEmitter.mix();
         pid = _pid;
         turntables = _turntables;
         token = _token;
