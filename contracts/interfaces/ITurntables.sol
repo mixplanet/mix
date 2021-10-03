@@ -1,9 +1,6 @@
 pragma solidity ^0.5.6;
 
 interface ITurntables {
-
-    event Distribute(address indexed by, uint256 distributed);
-    event Claim(address indexed to, uint256 claimed);
     
     event AddType(
         uint256 price,
@@ -17,10 +14,8 @@ interface ITurntables {
     event Buy(address indexed owner, uint256 indexed turntableId);
     event Destroy(address indexed owner, uint256 indexed turntableId);
 
-    function accumulativeOf(address owner) external view returns (uint256);
-    function claimedOf(address owner) external view returns (uint256);
-    function claimableOf(address owner) external view returns (uint256);
-    function claim() external;
+    event Distribute(address indexed by, uint256 distributed);
+    event Claim(uint256 indexed turntableId, uint256 claimed);
 
     function types(uint256 typeId) external view returns (
         uint256 price,
@@ -52,4 +47,9 @@ interface ITurntables {
     function ownerOf(uint256 turntableId) external returns (address);
     function exists(uint256 turntableId) external returns (bool);
     function destroy(uint256 turntableId) external;
+
+    function accumulativeOf(uint256 turntableId) external view returns (uint256);
+    function claimedOf(uint256 turntableId) external view returns (uint256);
+    function claimableOf(uint256 turntableId) external view returns (uint256);
+    function claim(uint256[] calldata turntableIds) external returns (uint256);
 }

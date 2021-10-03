@@ -9,7 +9,7 @@ import "./interfaces/IMix.sol";
 contract Booth is IBooth, KIP7, KIP7Metadata("DSC Mixset", "MIXSET", 18) {
     using SafeMath for uint256;
 
-    IMix private mix;
+    IMix public mix;
 
     constructor(IMix _mix) public {
         mix = _mix;

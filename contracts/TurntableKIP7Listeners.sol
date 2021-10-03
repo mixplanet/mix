@@ -1,5 +1,6 @@
 pragma solidity ^0.5.6;
 
+import "./klaytn-contracts/ownership/Ownable.sol";
 import "./klaytn-contracts/math/SafeMath.sol";
 import "./libraries/SignedSafeMath.sol";
 import "./interfaces/ITurntableKIP7Listeners.sol";
@@ -8,15 +9,15 @@ import "./interfaces/IMix.sol";
 import "./interfaces/ITurntables.sol";
 import "./klaytn-contracts/token/KIP7/IKIP7.sol";
 
-contract TurntableKIP7Listeners is ITurntableKIP7Listeners {
+contract TurntableKIP7Listeners is Ownable, ITurntableKIP7Listeners {
     using SafeMath for uint256;
     using SignedSafeMath for int256;
 
-    IMixEmitter private mixEmitter;
-    IMix private mix;
-    uint256 private pid;
-    ITurntables private turntables;
-    IKIP7 private token;
+    IMixEmitter public mixEmitter;
+    IMix public mix;
+    uint256 public pid;
+    ITurntables public turntables;
+    IKIP7 public token;
 
     constructor(
         IMixEmitter _mixEmitter,
@@ -42,6 +43,10 @@ contract TurntableKIP7Listeners is ITurntableKIP7Listeners {
     uint256 private pointsPerShare = 0;
     mapping(uint256 => mapping(address => int256)) private pointsCorrection;
     mapping(uint256 => mapping(address => uint256)) private claimed;
+
+    function setTurntableFee(uint256 fee) onlyOwner external {
+        turntableFee = fee;
+    }
 
     function updateBalance() private {
         if (totalShares > 0) {
@@ -74,7 +79,7 @@ contract TurntableKIP7Listeners is ITurntableKIP7Listeners {
     }
 
     function claimableOf(uint256 turntableId, address owner) external view returns (uint256) {
-        return accumulativeOf(turntableId, owner).sub(claimed[turntableId][owner]);
+        return accumulativeOf(turntableId, owner).sub(claimed[turntableId][owner]).mul(uint256(1e4).sub(turntableFee)).div(1e4);
     }
 
     function _accumulativeOf(uint256 turntableId, address owner) private view returns (uint256) {

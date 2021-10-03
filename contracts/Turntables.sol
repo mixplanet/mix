@@ -1,13 +1,38 @@
 pragma solidity ^0.5.6;
 
-import "./klaytn-contracts/ownership/Ownable.sol";
 import "./klaytn-contracts/math/SafeMath.sol";
+import "./libraries/SignedSafeMath.sol";
+import "./klaytn-contracts/ownership/Ownable.sol";
 import "./klaytn-contracts/token/KIP7/IKIP7.sol";
+import "./interfaces/IMixEmitter.sol";
+import "./interfaces/IMix.sol";
 import "./interfaces/ITurntables.sol";
-import "./MixDividend.sol";
 
-contract Turntables is Ownable, ITurntables, MixDividend {
+contract Turntables is Ownable, ITurntables {
     using SafeMath for uint256;
+    using SignedSafeMath for int256;
+
+    IMixEmitter public mixEmitter;
+    IMix public mix;
+    uint256 public pid;
+
+    constructor(
+        IMixEmitter _mixEmitter,
+        IMix _mix,
+        uint256 _pid
+    ) public {
+        mixEmitter = _mixEmitter;
+        mix = _mix;
+        pid = _pid;
+    }
+
+    uint256 internal currentBalance = 0;
+    uint256 internal totalVolume = 0;
+
+    uint256 constant internal pointsMultiplier = 2**128;
+    uint256 internal pointsPerShare = 0;
+    mapping(uint256 => int256) internal pointsCorrection;
+    mapping(uint256 => uint256) internal claimed;
     
     struct Type {
         uint256 price;
@@ -67,7 +92,11 @@ contract Turntables is Ownable, ITurntables, MixDividend {
             endBlock: block.number.add(_type.lifetime),
             lastClaimedBlock: block.number
         }));
-        _addShare(_type.volume);
+        
+        updateBalance();
+        totalVolume = totalVolume.add(_type.volume);
+        pointsCorrection[turntableId] = int256(pointsPerShare.mul(_type.volume)).mul(-1);
+
         mix.transferFrom(msg.sender, address(this), _type.price);
         emit Buy(msg.sender, turntableId);
     }
@@ -76,7 +105,7 @@ contract Turntables is Ownable, ITurntables, MixDividend {
         return turntables.length;
     }
 
-    function ownerOf(uint256 turntableId) external returns (address) {
+    function ownerOf(uint256 turntableId) public returns (address) {
         return turntables[turntableId].owner;
     }
 
@@ -85,14 +114,109 @@ contract Turntables is Ownable, ITurntables, MixDividend {
     }
 
     function destroy(uint256 turntableId) external {
+        
         Turntable memory turntable = turntables[turntableId];
         require(turntable.owner == msg.sender);
-        claim();
+
+        uint256[] memory turntableIds = new uint256[](1);
+        turntableIds[0] = turntableId;
+        claim(turntableIds);
+        
         Type memory _type = types[turntable.typeId];
-        _subShare(_type.volume);
+        totalVolume = totalVolume.sub(_type.volume);
+        delete pointsCorrection[turntableId];
+
         mix.transfer(msg.sender, _type.destroyReturn);
         mix.burn(_type.price - _type.destroyReturn);
         delete turntables[turntableId];
+
         emit Destroy(msg.sender, turntableId);
+    }
+
+    function updateBalance() internal {
+        if (totalVolume > 0) {
+            mixEmitter.updatePool(pid);
+            uint256 balance = mix.balanceOf(address(this));
+            uint256 value = balance.sub(currentBalance);
+            if (value > 0) {
+                pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(totalVolume));
+                emit Distribute(msg.sender, value);
+            }
+            currentBalance = balance;
+        }
+    }
+
+    function claimedOf(uint256 turntableId) public view returns (uint256) {
+        return claimed[turntableId];
+    }
+
+    function accumulativeOf(uint256 turntableId) public view returns (uint256) {
+        uint256 _pointsPerShare = pointsPerShare;
+        if (totalVolume > 0) {
+            uint256 balance = mixEmitter.pendingMix(pid).add(mix.balanceOf(address(this)));
+            uint256 value = balance.sub(currentBalance);
+            if (value > 0) {
+                _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(totalVolume));
+            }
+            return uint256(int256(_pointsPerShare.mul(types[turntables[turntableId].typeId].volume)).add(pointsCorrection[turntableId])).div(pointsMultiplier);
+        }
+        return 0;
+    }
+
+    function claimableOf(uint256 turntableId) external view returns (uint256) {
+        uint256 claimable = accumulativeOf(turntableId).sub(claimed[turntableId]);
+        Turntable memory turntable = turntables[turntableId];
+        if (turntable.endBlock <= turntable.lastClaimedBlock) {
+            return 0;
+        } else if (turntable.endBlock < block.number) {
+            return claimable.mul(turntable.endBlock.sub(turntable.lastClaimedBlock)).div(block.number.sub(turntable.lastClaimedBlock));
+        } else {
+            return claimable;
+        }
+    }
+
+    function _accumulativeOf(uint256 turntableId) internal view returns (uint256) {
+        return uint256(int256(pointsPerShare).add(pointsCorrection[turntableId])).div(pointsMultiplier);
+    }
+
+    function _claimableOf(uint256 turntableId) internal view returns (uint256) {
+        return _accumulativeOf(turntableId).sub(claimed[turntableId]);
+    }
+
+    function claim(uint256[] memory turntableIds) public returns (uint256 totalClaimable) {
+        updateBalance();
+        
+        uint256 toBurn = 0;
+        uint256 length = turntableIds.length;
+        for (uint256 i = 0; i < length; i = i.add(1)) {
+            uint256 turntableId = turntableIds[i];
+            require(ownerOf(turntableId) == msg.sender);
+            uint256 claimable = _claimableOf(turntableId);
+            if (claimable > 0) {
+                uint256 realClaimable = 0;
+
+                Turntable memory turntable = turntables[turntableId];
+                if (turntable.endBlock <= turntable.lastClaimedBlock) {
+                    // ignore.
+                } else if (turntable.endBlock < block.number) {
+                    realClaimable = claimable.mul(turntable.endBlock.sub(turntable.lastClaimedBlock)).div(block.number.sub(turntable.lastClaimedBlock));
+                } else {
+                    realClaimable = claimable;
+                }
+
+                if (realClaimable > 0) {
+                    toBurn = toBurn.add(claimable.sub(realClaimable));
+                    claimed[turntableId] = claimed[turntableId].add(realClaimable);
+                    emit Claim(turntableId, realClaimable);
+                    totalClaimable = totalClaimable.add(realClaimable);
+                }
+
+                turntables[turntableId].lastClaimedBlock = block.number;
+            }
+        }
+
+        mix.transfer(msg.sender, totalClaimable);
+        mix.burn(toBurn);
+        currentBalance = currentBalance.sub(totalClaimable.add(toBurn));
     }
 }
