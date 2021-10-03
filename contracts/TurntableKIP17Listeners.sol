@@ -127,7 +127,7 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
         for (uint256 i = 0; i < length; i = i.add(1)) {
             uint256 id = ids[i];
             require(nft.ownerOf(id) == msg.sender);
-            if (listening[id] == true) {
+            if (listening[id] == true && listeningTo[id] != turntableId) {
                 uint256 originTo = listeningTo[id];
                 _claim(originTo, id);
                 shares[originTo][id] = shares[originTo][id].sub(1);
