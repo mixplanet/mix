@@ -14,7 +14,7 @@ contract KIP17Dividend is IKIP17Dividend {
     IMixEmitter private mixEmitter;
     IMix private mix;
     uint256 private pid;
-    IKIP17Enumerable private nft;
+    IKIP17Enumerable private nft;   //Q. All of these variables are private?
 
     constructor(
         IMixEmitter _mixEmitter,
