@@ -92,23 +92,26 @@ contract TurntableKIP17Listeners is ITurntableKIP17Listeners {
         uint256 length = ids.length;
         uint256 totalClaimable = 0;
         for (uint256 i = 0; i < length; i = i.add(1)) {
-            uint256 id = ids[i];
-            require(nft.ownerOf(id) == msg.sender && listening[id] == true && listeningTo[id] == turntableId);
-            uint256 claimable = _claimableOf(turntableId, id);
-            if (claimable > 0) {
-                claimed[turntableId][id] = claimed[turntableId][id].add(claimable);
-                emit Claim(turntableId, id, claimable);
-                uint256 fee = claimable.mul(turntableFee).div(1e4);
-                if (turntables.exists(turntableId) == true) {
-                    mix.transfer(turntables.ownerOf(turntableId), fee);
-                } else {
-                    mix.burn(fee);
-                }
-                mix.transfer(msg.sender, claimable.sub(fee));
-                totalClaimable = totalClaimable.add(claimable);
-            }
+            uint256 claimable = _claim(turntableId, ids[i]);
+            totalClaimable = totalClaimable.add(claimable);
         }
         currentBalance = currentBalance.sub(totalClaimable);
+    }
+
+    function _claim(uint256 turntableId, uint256 id) internal returns (uint256 claimable) {
+        require(nft.ownerOf(id) == msg.sender && listening[id] == true && listeningTo[id] == turntableId);
+        claimable = _claimableOf(turntableId, id);
+        if (claimable > 0) {
+            claimed[turntableId][id] = claimed[turntableId][id].add(claimable);
+            emit Claim(turntableId, id, claimable);
+            uint256 fee = claimable.mul(turntableFee).div(1e4);
+            if (turntables.exists(turntableId) == true) {
+                mix.transfer(turntables.ownerOf(turntableId), fee);
+            } else {
+                mix.burn(fee);
+            }
+            mix.transfer(msg.sender, claimable.sub(fee));
+        }
     }
 
     function listen(uint256 turntableId, uint256[] calldata ids) external {
@@ -117,12 +120,7 @@ contract TurntableKIP17Listeners is ITurntableKIP17Listeners {
         totalShares = totalShares.add(length);
         for (uint256 i = 0; i < length; i = i.add(1)) {
             uint256 id = ids[i];
-            require(nft.ownerOf(id) == msg.sender);
-            if (listening[id] == true) {
-                uint256 originTo = listeningTo[id];
-                shares[originTo][id] = shares[originTo][id].sub(1);
-                pointsCorrection[originTo][id] = pointsCorrection[originTo][id].add(int256(pointsPerShare));
-            }
+            require(nft.ownerOf(id) == msg.sender && listening[id] != true);
             shares[turntableId][id] = shares[turntableId][id].add(1);
             pointsCorrection[turntableId][id] = pointsCorrection[turntableId][id].sub(int256(pointsPerShare));
             listeningTo[id] = turntableId;
@@ -137,7 +135,7 @@ contract TurntableKIP17Listeners is ITurntableKIP17Listeners {
         totalShares = totalShares.sub(length);
         for (uint256 i = 0; i < length; i = i.add(1)) {
             uint256 id = ids[i];
-            require(nft.ownerOf(id) == msg.sender && listening[id] == true && listeningTo[id] == turntableId);
+            _claim(turntableId, id);
             shares[turntableId][id] = shares[turntableId][id].sub(1);
             pointsCorrection[turntableId][id] = pointsCorrection[turntableId][id].add(int256(pointsPerShare));
             delete listeningTo[id];
