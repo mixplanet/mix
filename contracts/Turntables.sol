@@ -121,9 +121,14 @@ contract Turntables is Ownable, ITurntables {
         require(amount > 0);
 
         Turntable storage turntable = turntables[turntableId];
+        require(turntable.owner == msg.sender);
         Type memory _type = types[turntable.typeId];
 
-        uint256 chagedLifetime = _type.lifetime.mul(amount).mul(chargingEfficiency).div(100).div(_type.volume);
+        uint256[] memory turntableIds = new uint256[](1);
+        turntableIds[0] = turntableId;
+        claim(turntableIds);
+
+        uint256 chagedLifetime = _type.lifetime.mul(amount).mul(chargingEfficiency).div(100).div(_type.price);
         uint256 oldEndBlock = turntable.endBlock;
         turntable.endBlock = (block.number < oldEndBlock ? oldEndBlock : block.number).add(chagedLifetime);
     

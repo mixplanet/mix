@@ -9,7 +9,7 @@ interface IMixEmitter {
 
     function mix() external view returns (IMix);
     function emitPerBlock() external view returns (uint256);
-    function startBlock() external view returns (uint256);
+    function started() external view returns (bool);
 
     function poolCount() external view returns (uint256);
     function poolInfo(uint256 pid) external view returns (
