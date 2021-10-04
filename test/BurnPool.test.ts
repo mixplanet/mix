@@ -21,7 +21,7 @@ const setupTest = async () => {
     await mix.setBooth(booth.address);
 
     const BurnPool = await ethers.getContractFactory("BurnPool");
-    const burnPool = (await BurnPool.deploy(emitter.address, mix.address, 0)) as BurnPool;
+    const burnPool = (await BurnPool.deploy(emitter.address, 0)) as BurnPool;
 
     await emitter.add(burnPool.address, 700);
     await emitter.add(bob.address, 200);
