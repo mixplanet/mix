@@ -251,5 +251,20 @@ describe("KIP7StakingPool", () => {
         await checkShares(kip7sp, [alice, bob, carol], [800, 100, 100]);
         await checkClaimable(kip7sp, [alice, bob, carol], [rewardA, rewardB, rewardC]);
         await checkMixBalance(mix, [alice, bob, carol], [claimA, claimB, claimC]);
+
+        rewardA = rewardA.add(emissionPerBlock.div(2).mul(1).mul(800).div(1000));
+        rewardB = rewardB.add(emissionPerBlock.div(2).mul(1).mul(100).div(1000));
+        rewardC = rewardC.add(emissionPerBlock.div(2).mul(1).mul(100).div(1000));
+        await emitter.set(1, 0);
+        await expect(() => mine()).to.changeTokenBalance(mix, kip7sp, emissionPerBlock.div(2));
+        await checkShares(kip7sp, [alice, bob, carol], [800, 100, 100]);
+        await checkClaimable(kip7sp, [alice, bob, carol], [rewardA, rewardB, rewardC]);
+        await checkMixBalance(mix, [alice, bob, carol], [claimA, claimB, claimC]);
+
+        expect((await emitter.poolInfo(1)).allocPoint).to.be.equal(0);
+        await expect(() => mine()).to.changeTokenBalance(mix, kip7sp, 0);
+        await checkShares(kip7sp, [alice, bob, carol], [800, 100, 100]);
+        await checkClaimable(kip7sp, [alice, bob, carol], [rewardA, rewardB, rewardC]);
+        await checkMixBalance(mix, [alice, bob, carol], [claimA, claimB, claimC]);
     });
 });
