@@ -108,11 +108,11 @@ contract Turntables is Ownable, ITurntables {
         return turntables.length;
     }
 
-    function ownerOf(uint256 turntableId) public returns (address) {
+    function ownerOf(uint256 turntableId) public view returns (address) {
         return turntables[turntableId].owner;
     }
 
-    function exists(uint256 turntableId) external returns (bool) {
+    function exists(uint256 turntableId) external view returns (bool) {
         return turntables[turntableId].owner != address(0);
     }
 
