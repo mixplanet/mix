@@ -101,6 +101,7 @@ contract Turntables is Ownable, ITurntables {
         pointsCorrection[turntableId] = int256(pointsPerShare.mul(_type.volume)).mul(-1);
 
         mix.transferFrom(msg.sender, address(this), _type.price);
+        currentBalance = mix.balanceOf(address(this));
         emit Buy(msg.sender, turntableId);
     }
 
@@ -132,6 +133,7 @@ contract Turntables is Ownable, ITurntables {
         turntable.endBlock = (block.number < oldEndBlock ? oldEndBlock : block.number).add(chagedLifetime);
     
         mix.burnFrom(msg.sender, amount);
+        currentBalance = mix.balanceOf(address(this));
         emit Charge(msg.sender, turntableId, amount);
     }
 
@@ -151,6 +153,7 @@ contract Turntables is Ownable, ITurntables {
         mix.burn(_type.price - _type.destroyReturn);
         delete turntables[turntableId];
 
+        currentBalance = mix.balanceOf(address(this));
         emit Destroy(msg.sender, turntableId);
     }
 
@@ -163,7 +166,6 @@ contract Turntables is Ownable, ITurntables {
                 pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(totalVolume));
                 emit Distribute(msg.sender, value);
             }
-            currentBalance = balance;
         }
     }
 
@@ -248,6 +250,6 @@ contract Turntables is Ownable, ITurntables {
 
         mix.transfer(msg.sender, totalClaimable);
         mix.burn(toBurn);
-        currentBalance = currentBalance.sub(totalClaimable.add(toBurn));
+        currentBalance = mix.balanceOf(address(this));
     }
 }
