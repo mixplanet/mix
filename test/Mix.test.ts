@@ -32,6 +32,21 @@ describe("Mix", () => {
         await ethers.provider.send("hardhat_reset", []);
     });
 
+    it("has given data", async () => {
+        const { mix } = await setupTest();
+
+        expect(await mix.totalSupply()).to.be.equal(ethers.utils.parseEther("641920"))
+        expect(await mix.name()).to.be.equal("DSC Mix")
+        expect(await mix.symbol()).to.be.equal("MIX")
+        expect(await mix.decimals()).to.be.equal(18)
+    })
+
+    it("check the deployer balance", async () => {
+        const { deployer, mix } = await setupTest();
+
+        expect(await mix.balanceOf(deployer.address)).to.be.equal(ethers.utils.parseEther("641920"))
+    })
+
     it("should be that only owner can set emitter and booth", async () => {
         const { alice, mix, emitter, booth } = await setupTest();
 
