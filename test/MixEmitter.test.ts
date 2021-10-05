@@ -126,7 +126,7 @@ describe("MixEmitter", () => {
         expect(await emitter.pendingMix(2)).to.be.equal(reward2);
 
         const BurnPool = await ethers.getContractFactory("BurnPool");
-        const burnPool = (await BurnPool.deploy(emitter.address, mix.address, 3)) as BurnPool;
+        const burnPool = (await BurnPool.deploy(emitter.address, 3)) as BurnPool;
         await mix.setBooth(alice.address);
 
         await emitter.add(burnPool.address, 500); //121
