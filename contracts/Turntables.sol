@@ -16,10 +16,7 @@ contract Turntables is Ownable, ITurntables {
     IMix public mix;
     uint256 public pid;
 
-    constructor(
-        IMixEmitter _mixEmitter,
-        uint256 _pid
-    ) public {
+    constructor(IMixEmitter _mixEmitter, uint256 _pid) public {
         mixEmitter = _mixEmitter;
         mix = _mixEmitter.mix();
         pid = _pid;
@@ -78,7 +75,7 @@ contract Turntables is Ownable, ITurntables {
         emit DenyType(typeId);
     }
 
-    function setChargingEfficiency(uint256 value) onlyOwner external {
+    function setChargingEfficiency(uint256 value) external onlyOwner {
         chargingEfficiency = value;
         emit ChangeChargingEfficiency(value);
     }
@@ -131,7 +128,7 @@ contract Turntables is Ownable, ITurntables {
         uint256 chagedLifetime = _type.lifetime.mul(amount).mul(chargingEfficiency).div(100).div(_type.price);
         uint256 oldEndBlock = turntable.endBlock;
         turntable.endBlock = (block.number < oldEndBlock ? oldEndBlock : block.number).add(chagedLifetime);
-    
+
         mix.burnFrom(msg.sender, amount);
         currentBalance = mix.balanceOf(address(this));
         emit Charge(msg.sender, turntableId, amount);
