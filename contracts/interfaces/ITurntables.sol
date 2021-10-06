@@ -46,7 +46,7 @@ interface ITurntables {
     );
 
     function buy(uint256 typeId) external returns (uint256 turntableId);
-    function turntableCount() external view returns (uint256);
+    function turntableLength() external view returns (uint256);
     function ownerOf(uint256 turntableId) external view returns (address);
     function exists(uint256 turntableId) external view returns (bool);
     function charge(uint256 turntableId, uint256 amount) external;

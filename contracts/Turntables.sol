@@ -105,7 +105,7 @@ contract Turntables is Ownable, ITurntables {
         emit Buy(msg.sender, turntableId);
     }
 
-    function turntableCount() external view returns (uint256) {
+    function turntableLength() external view returns (uint256) {
         return turntables.length;
     }
 
