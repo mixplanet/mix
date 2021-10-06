@@ -205,7 +205,7 @@ contract Turntables is Ownable, ITurntables {
     }
 
     function _accumulativeOf(uint256 turntableId) internal view returns (uint256) {
-        return uint256(int256(pointsPerShare).add(pointsCorrection[turntableId])).div(pointsMultiplier);
+        return uint256(int256(pointsPerShare.mul(types[turntables[turntableId].typeId].volume)).add(pointsCorrection[turntableId])).div(pointsMultiplier);
     }
 
     function _claimableOf(uint256 turntableId) internal view returns (uint256) {
