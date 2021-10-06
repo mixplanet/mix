@@ -30,6 +30,7 @@ contract Turntables is Ownable, ITurntables {
     uint256 internal pointsPerShare = 0;
     mapping(uint256 => int256) internal pointsCorrection;
     mapping(uint256 => uint256) internal claimed;
+    mapping(uint256 => uint256) internal realClaimed;
 
     struct Type {
         uint256 price;
@@ -168,7 +169,7 @@ contract Turntables is Ownable, ITurntables {
     }
 
     function claimedOf(uint256 turntableId) public view returns (uint256) {
-        return claimed[turntableId];
+        return realClaimed[turntableId];
     }
 
     function accumulativeOf(uint256 turntableId) public view returns (uint256) {
@@ -237,11 +238,12 @@ contract Turntables is Ownable, ITurntables {
 
                 toBurn = toBurn.add(claimable.sub(realClaimable));
                 if (realClaimable > 0) {
-                    claimed[turntableId] = claimed[turntableId].add(realClaimable);
+                    realClaimed[turntableId] = realClaimed[turntableId].add(realClaimable);
                     emit Claim(turntableId, realClaimable);
                     totalClaimable = totalClaimable.add(realClaimable);
                 }
 
+                claimed[turntableId] = claimed[turntableId].add(claimable);
                 turntables[turntableId].lastClaimedBlock = block.number;
             }
         }
