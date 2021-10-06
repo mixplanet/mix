@@ -246,8 +246,8 @@ contract Turntables is Ownable, ITurntables {
             }
         }
 
-        mix.transfer(msg.sender, totalClaimable);
-        mix.burn(toBurn);
+        if (totalClaimable > 0) mix.transfer(msg.sender, totalClaimable);
+        if (toBurn > 0) mix.burn(toBurn);
         currentBalance = mix.balanceOf(address(this));
     }
 }
