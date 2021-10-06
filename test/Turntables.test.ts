@@ -27,6 +27,8 @@ const setupTest = async () => {
     await mix.setEmitter(emitter.address);
     await mix.setBooth(booth.address);
 
+    await emitter.start();
+
     const Turntables = await ethers.getContractFactory("Turntables");
     const turntables = (await Turntables.deploy(emitter.address, 1)) as Turntables;
 
@@ -102,21 +104,21 @@ describe("Turntables", () => {
         await expect(turntables.connect(alice).buy(0)).to.be.reverted;
         await turntables.allowType(0);
         await expect(turntables.connect(alice).buy(0)).to.emit(turntables, "Buy").withArgs(alice.address, 0);
-        expect(await turntables.turntableCount()).to.be.equal(1);
+        expect(await turntables.turntableLength()).to.be.equal(1);
     });
 
-    it.only("should be that buy, destroy, charge functions work properly", async () => {
+    it("should be that buy, destroy, charge functions work properly", async () => {
         const { turntables, alice, bob } = await setupTest();
 
-        await turntables.addType(100, 50, 10, 300);
-        await turntables.addType(200, 100, 20, 600);
+        await turntables.addType(1000, 500, 10, 300);
+        await turntables.addType(2000, 1000, 20, 600);
         await turntables.allowType(0);
         await turntables.allowType(1);
 
-        expect(await turntables.turntableCount()).to.be.equal(0);
+        expect(await turntables.turntableLength()).to.be.equal(0);
         await expect(turntables.connect(alice).buy(0)).to.emit(turntables, "Buy").withArgs(alice.address, 0);
         let end0 = (await getBlock()) + 300;
-        expect(await turntables.turntableCount()).to.be.equal(1);
+        expect(await turntables.turntableLength()).to.be.equal(1);
         await turntables.connect(alice).buy(0);
         let end1 = (await getBlock()) + 300;
 
@@ -124,7 +126,7 @@ describe("Turntables", () => {
         let end2 = (await getBlock()) + 300;
         await turntables.connect(bob).buy(1);
         let end3 = (await getBlock()) + 600;
-        expect(await turntables.turntableCount()).to.be.equal(4);
+        expect(await turntables.turntableLength()).to.be.equal(4);
 
         /**
          * 0-0-alice
@@ -158,22 +160,88 @@ describe("Turntables", () => {
         expect(await turntables.ownerOf(0)).to.be.equal(AddressZero);
         expect(await turntables.exists(0)).to.be.false;
         expect((await turntables.turntables(0)).endBlock).to.be.equal(Zero);
-        // expect(await turntables.turntableCount()).to.be.equal(3);
+        expect(await turntables.turntableLength()).to.be.equal(4);
 
-        await expect(turntables.connect(alice).charge(0, 300)).to.be.reverted;
-        await expect(turntables.connect(alice).charge(2, 300)).to.be.reverted;
+        await expect(turntables.connect(alice).charge(0, 3000)).to.be.reverted;
+        await expect(turntables.connect(alice).charge(2, 3000)).to.be.reverted;
 
         expect((await turntables.turntables(1)).endBlock).to.be.equal(end1);
-        await expect(turntables.connect(alice).charge(1, 300))
+        let amount = 3000;
+        await expect(turntables.connect(alice).charge(1, amount))
             .to.emit(turntables, "Charge")
-            .withArgs(alice.address, 1, 300);
-        let amount = 300;
-        const price0 = 100;
+            .withArgs(alice.address, 1, amount);
+        const price0 = 1000;
         const lifetime0 = 300;
         end1 += ((amount * lifetime0) / price0) * 2;
         expect((await turntables.turntables(1)).endBlock).to.be.equal(end1);
+
+        amount = 7890;
+        await expect(turntables.connect(alice).charge(1, amount))
+            .to.emit(turntables, "Charge")
+            .withArgs(alice.address, 1, amount);
+        end1 += ((amount * lifetime0) / price0) * 2;
+        expect((await turntables.turntables(1)).endBlock).to.be.equal(end1);
+
+        amount = 23050;
+        await expect(turntables.connect(bob).charge(3, amount))
+            .to.emit(turntables, "Charge")
+            .withArgs(bob.address, 3, amount);
+        const price1 = 2000;
+        const lifetime1 = 600;
+        end3 += ((amount * lifetime1) / price1) * 2;
+        expect((await turntables.turntables(3)).endBlock).to.be.equal(end3);
+
+        // console.log(end1, end2, end3);   //   end1 : 6855, end2 : 322, end3 : 14453
+        await mineTo(500);
+        expect((await turntables.turntables(2)).endBlock).to.be.lt(await getBlock());
+        amount = 2340;
+        await expect(turntables.connect(bob).charge(2, amount))
+            .to.emit(turntables, "Charge")
+            .withArgs(bob.address, 2, amount);
+        let end2_wrong = end2 + ((amount * lifetime0) / price0) * 2;
+        expect((await turntables.turntables(2)).endBlock).to.be.not.equal(end2_wrong);
+        end2 = 500 + ((amount * lifetime0) / price0) * 2;
+        expect((await turntables.turntables(2)).endBlock).to.be.equal(end2);
+
+        // console.log(end1, end2, end3);   //   end1 : 6855, end2 : 1904, end3 : 14453
+        await mineTo(2000);
+        expect((await turntables.turntables(2)).endBlock).to.be.lt(await getBlock());
+        await turntables.connect(bob).destroy(2);
+
+        expect(await turntables.ownerOf(2)).to.be.equal(AddressZero);
+        expect(await turntables.exists(2)).to.be.false;
+        expect((await turntables.turntables(2)).endBlock).to.be.equal(Zero);
+        expect(await turntables.claimableOf(2)).to.be.equal(Zero);
     });
-    
+
+    it.only("should be that functions related with a claim work properly", async () => {
+        const { turntables, alice, bob } = await setupTest();
+
+        await turntables.addType(1000, 500, 10, 300);
+        await turntables.addType(2000, 1000, 20, 600);
+        await turntables.allowType(0);
+        await turntables.allowType(1);
+
+        await turntables.connect(alice).buy(0);
+        let end0 = (await getBlock()) + 300;
+        await turntables.connect(alice).buy(0);
+        let end1 = (await getBlock()) + 300;
+
+        await turntables.connect(bob).buy(0);
+        let end2 = (await getBlock()) + 300;
+        await turntables.connect(bob).buy(1);
+        let end3 = (await getBlock()) + 600;
+
+        /**
+         * 0-0-alice
+         * 1-0-alice
+         * 2-0-bob
+         * 3-1-bob
+         */
+
+        
+    });
+
     // it("overall test", async () => {
     //     const { turntables, mix, emitter, alice, bob, carol, dan, deployer, booth } = await setupTest();
 
