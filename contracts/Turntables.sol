@@ -17,6 +17,7 @@ contract Turntables is Ownable, ITurntables {
     uint256 public pid;
 
     constructor(IMixEmitter _mixEmitter, uint256 _pid) public {
+        require(_mixEmitter.started());
         mixEmitter = _mixEmitter;
         mix = _mixEmitter.mix();
         pid = _pid;
