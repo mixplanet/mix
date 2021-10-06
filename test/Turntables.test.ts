@@ -172,14 +172,14 @@ describe("Turntables", () => {
             .withArgs(alice.address, 1, amount);
         const price0 = 1000;
         const lifetime0 = 300;
-        end1 += ((amount * lifetime0) / price0) * 2;
+        end1 += Math.floor(((amount * lifetime0) / price0) * 2);
         expect((await turntables.turntables(1)).endBlock).to.be.equal(end1);
 
         amount = 7890;
         await expect(turntables.connect(alice).charge(1, amount))
             .to.emit(turntables, "Charge")
             .withArgs(alice.address, 1, amount);
-        end1 += ((amount * lifetime0) / price0) * 2;
+        end1 += Math.floor(((amount * lifetime0) / price0) * 2);
         expect((await turntables.turntables(1)).endBlock).to.be.equal(end1);
 
         amount = 23050;
@@ -188,7 +188,7 @@ describe("Turntables", () => {
             .withArgs(bob.address, 3, amount);
         const price1 = 2000;
         const lifetime1 = 600;
-        end3 += ((amount * lifetime1) / price1) * 2;
+        end3 += Math.floor(((amount * lifetime1) / price1) * 2);
         expect((await turntables.turntables(3)).endBlock).to.be.equal(end3);
 
         // console.log(end1, end2, end3);   //   end1 : 6855, end2 : 322, end3 : 14453
@@ -215,7 +215,7 @@ describe("Turntables", () => {
     });
 
     it.only("should be that functions related with a claim work properly", async () => {
-        const { turntables, alice, bob } = await setupTest();
+        const { mix, emitter, turntables, booth, alice, bob } = await setupTest();
 
         await turntables.addType(1000, 500, 10, 300);
         await turntables.addType(2000, 1000, 20, 600);
@@ -232,14 +232,146 @@ describe("Turntables", () => {
         await turntables.connect(bob).buy(1);
         let end3 = (await getBlock()) + 600;
 
-        /**
-         * 0-0-alice
-         * 1-0-alice
-         * 2-0-bob
-         * 3-1-bob
-         */
+        // 0-0-alice
+        // 1-0-alice
+        // 2-0-bob
+        // 3-1-bob
 
-        
+        let blockReward0 = emissionPerBlock.div(2).mul(10);
+        let blockReward1 = emissionPerBlock.div(2).mul(10);
+        let blockReward2 = emissionPerBlock.div(2).mul(10);
+        let blockReward3 = emissionPerBlock.div(2).mul(20);
+        let totalVolume = 50;
+
+        autoMining(false);
+        await mineTo(100);
+        await turntables.connect(alice).claim([0, 1]);
+        await turntables.connect(bob).claim([2, 3]);
+        await mine();
+
+        await mineTo(200);
+        await turntables.connect(alice).claim([0, 1]);
+        let rewardA = blockReward0.add(blockReward1).mul(100).div(totalVolume);
+        await expect(() => mine()).to.changeTokenBalances(mix, [alice], [rewardA]);
+
+        await mineTo(210);
+        await turntables.connect(alice).claim([0]);
+        await turntables.connect(alice).claim([1]);
+        rewardA = blockReward0.add(blockReward1).mul(10).div(totalVolume);
+        await expect(() => mine()).to.changeTokenBalances(mix, [alice], [rewardA]);
+
+        await mineTo(220);
+        await turntables.connect(alice).claim([0]);
+        rewardA = blockReward0.mul(10).div(totalVolume);
+        await expect(() => mine()).to.changeTokenBalances(mix, [alice], [rewardA]);
+
+        await mineTo(230);
+        await turntables.connect(alice).claim([0]);
+        await turntables.connect(bob).claim([3]);
+        rewardA = blockReward0.mul(10).div(totalVolume);
+        let rewardB = blockReward3.mul(230 - 100).div(totalVolume);
+        await expect(() => mine()).to.changeTokenBalances(mix, [alice, bob], [rewardA, rewardB]);
+
+        await mineTo(240);
+        await turntables.connect(bob).claim([3]);
+        await turntables.connect(alice).claim([1]);
+        await turntables.connect(bob).claim([2]);
+        await turntables.connect(alice).claim([0]);
+        rewardA = blockReward0.mul(10).add(blockReward1.mul(30)).div(totalVolume);
+        rewardB = blockReward3
+            .mul(10)
+            .add(blockReward2.mul(240 - 100))
+            .div(totalVolume);
+        await expect(() => mine()).to.changeTokenBalances(mix, [alice, bob], [rewardA, rewardB]);
+
+        await mineTo(250);
+        await turntables.connect(bob).buy(1);
+        let end4 = 250 + 600;
+        await turntables.connect(alice).claim([0]);
+        rewardA = blockReward0.mul(10).div(totalVolume);
+        await expect(() => mine()).to.changeTokenBalances(mix, [alice], [rewardA]);
+
+        let oldTotalVolume = totalVolume;
+
+        let blockReward4 = emissionPerBlock.div(2).mul(20);
+        totalVolume = 70;
+
+        await mineTo(260);
+        await turntables.connect(alice).claim([1]);
+        await turntables.connect(bob).claim([3]);
+        rewardA = blockReward1.mul(10).div(oldTotalVolume).add(blockReward1.mul(10).div(totalVolume));
+        rewardB = blockReward3.mul(10).div(oldTotalVolume).add(blockReward3.mul(10).div(totalVolume));
+        await expect(() => mine()).to.changeTokenBalances(mix, [alice, bob], [rewardA.add(1), rewardB]); //solidity math
+
+        await mineTo(270);
+        // console.log(end0, end1, end2, end3, end4);  //320,321,322,623,849
+        await turntables.connect(alice).charge(1, 1234);
+        end1 += Math.floor(((1234 * 300) / 1000) * 2);
+        rewardA = blockReward1.mul(10).div(totalVolume);
+        await expect(() => mine()).to.changeTokenBalances(mix, [alice], [rewardA.sub(1234).add(1)]); //solidity math
+        let boothBal = BigNumber.from(1234).mul(3).div(1000);
+        expect(await mix.balanceOf(booth.address)).to.be.closeTo(boothBal, 10);
+
+        await mineTo(280);
+        await turntables.connect(alice).charge(0, 70);
+        await turntables.connect(alice).charge(1, 80);
+        await turntables.connect(bob).charge(2, 90);
+        rewardA = blockReward0.mul(30).add(blockReward1.mul(10)).div(totalVolume);
+        rewardB = blockReward2.mul(10).div(oldTotalVolume).add(blockReward2.mul(30).div(totalVolume));
+        let diffA = rewardA.sub(70 + 80);
+        let diffB = rewardB.sub(90);
+        end0 += Math.floor(((70 * 300) / 1000) * 2);
+        end1 += Math.floor(((80 * 300) / 1000) * 2);
+        end2 += Math.floor(((90 * 300) / 1000) * 2);
+
+        await expect(() => mine()).to.changeTokenBalances(mix, [alice, bob], [diffA, diffB]);
+        boothBal = boothBal.add(0);
+        expect(await mix.balanceOf(booth.address)).to.be.closeTo(boothBal, 10);
+        // console.log(end0, end1, end2, end3, end4); //362,1109,376,623,849
+
+        await mineTo(360);
+        await turntables.connect(alice).destroy(1);
+        await turntables.connect(bob).destroy(4);
+        rewardA = blockReward1.mul(80).div(totalVolume);
+        rewardB = blockReward4.mul(110).div(totalVolume);
+        diffA = rewardA.add(500).add(1); //smath
+        diffB = rewardB.add(1000);
+        await expect(() => mine()).to.changeTokenBalances(mix, [alice, bob], [diffA, diffB]);
+        boothBal = boothBal.add(BigNumber.from(500+1000).mul(3).div(1000));
+        expect(await mix.balanceOf(booth.address)).to.be.closeTo(boothBal, 10);
+        // console.log(end0, end1, end2, end3, end4); //362,-,376,623,-
+
+        oldTotalVolume = totalVolume;
+        totalVolume = 40;
+        //lastClaimed 280
+
+        await mineTo(365);
+        await turntables.connect(alice).claim([0]);
+        await turntables.connect(bob).destroy(2);
+        rewardA = blockReward0.mul(80).div(oldTotalVolume).add(blockReward0.mul(5).div(totalVolume));
+        rewardB = blockReward2.mul(80).div(oldTotalVolume).add(blockReward2.mul(5).div(totalVolume));
+        let realA = rewardA.mul(82).div(85);
+        let burnA = rewardA.sub(realA);
+
+        diffA = realA.add(1);
+        diffB = rewardB.add(500).add(1);
+        await expect(() => mine()).to.changeTokenBalances(mix, [alice, bob], [diffA, diffB]);
+        boothBal = boothBal.add(burnA.mul(3).div(1000)).add(BigNumber.from(500).mul(3).div(1000));
+        expect(await mix.balanceOf(booth.address)).to.be.closeTo(boothBal, 10);
+        // console.log(end0, end1, end2, end3, end4); //362,-,-,623,-
+        oldTotalVolume = totalVolume;
+        totalVolume = 30;
+
+        await mineTo(370);
+        await turntables.connect(alice).claim([0]);
+        rewardA = blockReward0.mul(5).div(totalVolume);
+        realA = Zero;
+        burnA = rewardA.sub(realA);
+        diffA = realA;
+        await expect(() => mine()).to.changeTokenBalances(mix, [alice], [diffA]);
+        boothBal = boothBal.add(burnA.mul(3).div(1000));
+        expect(await mix.balanceOf(booth.address)).to.be.closeTo(boothBal, 10);
+
     });
 
     // it("overall test", async () => {
