@@ -24,7 +24,7 @@ contract Turntables is Ownable, ITurntables {
     }
 
     uint256 internal currentBalance = 0;
-    uint256 internal totalVolume = 0;
+    uint256 public totalVolume = 0;
 
     uint256 internal constant pointsMultiplier = 2**128;
     uint256 internal pointsPerShare = 0;
