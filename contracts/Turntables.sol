@@ -16,10 +16,8 @@ contract Turntables is Ownable, ITurntables {
     IMix public mix;
     uint256 public pid;
 
-    constructor(
-        IMixEmitter _mixEmitter,
-        uint256 _pid
-    ) public {
+    constructor(IMixEmitter _mixEmitter, uint256 _pid) public {
+        require(_mixEmitter.started());
         mixEmitter = _mixEmitter;
         mix = _mixEmitter.mix();
         pid = _pid;
@@ -32,6 +30,7 @@ contract Turntables is Ownable, ITurntables {
     uint256 internal pointsPerShare = 0;
     mapping(uint256 => int256) internal pointsCorrection;
     mapping(uint256 => uint256) internal claimed;
+    mapping(uint256 => uint256) internal realClaimed;
 
     struct Type {
         uint256 price;
@@ -78,7 +77,7 @@ contract Turntables is Ownable, ITurntables {
         emit DenyType(typeId);
     }
 
-    function setChargingEfficiency(uint256 value) onlyOwner external {
+    function setChargingEfficiency(uint256 value) external onlyOwner {
         chargingEfficiency = value;
         emit ChangeChargingEfficiency(value);
     }
@@ -101,18 +100,19 @@ contract Turntables is Ownable, ITurntables {
         pointsCorrection[turntableId] = int256(pointsPerShare.mul(_type.volume)).mul(-1);
 
         mix.transferFrom(msg.sender, address(this), _type.price);
+        currentBalance = mix.balanceOf(address(this));
         emit Buy(msg.sender, turntableId);
     }
 
-    function turntableCount() external view returns (uint256) {
+    function turntableLength() external view returns (uint256) {
         return turntables.length;
     }
 
-    function ownerOf(uint256 turntableId) public returns (address) {
+    function ownerOf(uint256 turntableId) public view returns (address) {
         return turntables[turntableId].owner;
     }
 
-    function exists(uint256 turntableId) external returns (bool) {
+    function exists(uint256 turntableId) external view returns (bool) {
         return turntables[turntableId].owner != address(0);
     }
 
@@ -130,8 +130,9 @@ contract Turntables is Ownable, ITurntables {
         uint256 chagedLifetime = _type.lifetime.mul(amount).mul(chargingEfficiency).div(100).div(_type.price);
         uint256 oldEndBlock = turntable.endBlock;
         turntable.endBlock = (block.number < oldEndBlock ? oldEndBlock : block.number).add(chagedLifetime);
-    
+
         mix.burnFrom(msg.sender, amount);
+        currentBalance = mix.balanceOf(address(this));
         emit Charge(msg.sender, turntableId, amount);
     }
 
@@ -151,6 +152,7 @@ contract Turntables is Ownable, ITurntables {
         mix.burn(_type.price - _type.destroyReturn);
         delete turntables[turntableId];
 
+        currentBalance = mix.balanceOf(address(this));
         emit Destroy(msg.sender, turntableId);
     }
 
@@ -163,12 +165,11 @@ contract Turntables is Ownable, ITurntables {
                 pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(totalVolume));
                 emit Distribute(msg.sender, value);
             }
-            currentBalance = balance;
         }
     }
 
     function claimedOf(uint256 turntableId) public view returns (uint256) {
-        return claimed[turntableId];
+        return realClaimed[turntableId];
     }
 
     function accumulativeOf(uint256 turntableId) public view returns (uint256) {
@@ -205,7 +206,7 @@ contract Turntables is Ownable, ITurntables {
     }
 
     function _accumulativeOf(uint256 turntableId) internal view returns (uint256) {
-        return uint256(int256(pointsPerShare).add(pointsCorrection[turntableId])).div(pointsMultiplier);
+        return uint256(int256(pointsPerShare.mul(types[turntables[turntableId].typeId].volume)).add(pointsCorrection[turntableId])).div(pointsMultiplier);
     }
 
     function _claimableOf(uint256 turntableId) internal view returns (uint256) {
@@ -237,17 +238,18 @@ contract Turntables is Ownable, ITurntables {
 
                 toBurn = toBurn.add(claimable.sub(realClaimable));
                 if (realClaimable > 0) {
-                    claimed[turntableId] = claimed[turntableId].add(realClaimable);
+                    realClaimed[turntableId] = realClaimed[turntableId].add(realClaimable);
                     emit Claim(turntableId, realClaimable);
                     totalClaimable = totalClaimable.add(realClaimable);
                 }
 
+                claimed[turntableId] = claimed[turntableId].add(claimable);
                 turntables[turntableId].lastClaimedBlock = block.number;
             }
         }
 
-        mix.transfer(msg.sender, totalClaimable);
-        mix.burn(toBurn);
-        currentBalance = currentBalance.sub(totalClaimable.add(toBurn));
+        if (totalClaimable > 0) mix.transfer(msg.sender, totalClaimable);
+        if (toBurn > 0) mix.burn(toBurn);
+        currentBalance = mix.balanceOf(address(this));
     }
 }
