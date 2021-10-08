@@ -165,6 +165,11 @@ contract Turntables is Ownable, ITurntables {
                 pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(totalVolume));
                 emit Distribute(msg.sender, value);
             }
+        } else {
+            mixEmitter.updatePool(pid);
+            uint256 balance = mix.balanceOf(address(this));
+            uint256 value = balance.sub(currentBalance);
+            if (value > 0) mix.burn(value);
         }
     }
 
