@@ -406,7 +406,7 @@ describe("Turntables", () => {
         await expect(turntables.connect(alice).claim([3])).to.be.reverted;
     });
 
-    it.only("overall test", async () => {
+    it("overall test", async () => {
         const { turntables, mix, emitter, alice, bob, carol, deployer, booth } = await setupTest();
 
         const startBlock = (await emitter.poolInfo(1)).lastEmitBlock;
