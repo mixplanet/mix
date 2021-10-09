@@ -7,6 +7,8 @@ interface ITurntableKIP7Listeners {
     
     event Listen(uint256 indexed turntableId, address indexed owner, uint256 amount);
     event Unlisten(uint256 indexed turntableId, address indexed owner, uint256 amount);
+    
+    event SetTurntableFee(uint256 fee);
 
     function shares(uint256 turntableId, address owner) external view returns (uint256);
     function accumulativeOf(uint256 turntableId, address owner) external view returns (uint256);

@@ -16,6 +16,7 @@ contract Mix is Ownable, IMix, KIP7, KIP7Burnable, KIP7Metadata("DSC Mix", "MIX"
 
     address public emitter;
     address public booth;
+    uint256 public burnToBooth = 30; // 1e5
 
     function setEmitter(address _emitter) external onlyOwner {
         emitter = _emitter;
@@ -23,6 +24,11 @@ contract Mix is Ownable, IMix, KIP7, KIP7Burnable, KIP7Metadata("DSC Mix", "MIX"
 
     function setBooth(address _booth) external onlyOwner {
         booth = _booth;
+    }
+
+    function setBurnToBooth(address _burnToBooth) external onlyOwner {
+        burnToBooth = _burnToBooth;
+        emit SetBurnToBooth(_burnToBooth);
     }
 
     modifier onlyEmitter() {
@@ -35,13 +41,13 @@ contract Mix is Ownable, IMix, KIP7, KIP7Burnable, KIP7Metadata("DSC Mix", "MIX"
     }
 
     function burn(uint256 amount) public {
-        uint256 toBooth = amount.mul(3).div(1000);
+        uint256 toBooth = amount.mul(burnToBooth).div(1e5);
         transfer(booth, toBooth);
         _burn(msg.sender, amount - toBooth);
     }
 
     function burnFrom(address account, uint256 amount) public {
-        uint256 toBooth = amount.mul(3).div(1000);
+        uint256 toBooth = amount.mul(burnToBooth).div(1e5);
         transferFrom(account, booth, toBooth);
         _burnFrom(account, amount - toBooth);
     }

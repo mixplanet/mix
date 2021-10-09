@@ -6,6 +6,7 @@ interface IMixEmitter {
 
     event Add(address to, uint256 allocPoint);
     event Set(uint256 indexed pid, uint256 allocPoint);
+    event SetEmitPerBlock(uint256 emitPerBlock);
 
     function mix() external view returns (IMix);
     function emitPerBlock() external view returns (uint256);

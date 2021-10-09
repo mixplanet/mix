@@ -28,6 +28,12 @@ contract MixEmitter is Ownable, IMixEmitter {
         emitPerBlock = _emitPerBlock;
     }
 
+    function setEmitPerBlock(uint256 _emitPerBlock) external onlyOwner {
+        massUpdatePools();
+        emitPerBlock = _emitPerBlock;
+        emit SetEmitPerBlock(_emitPerBlock);
+    }
+
     function poolCount() external view returns (uint256) {
         return poolInfo.length;
     }

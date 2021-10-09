@@ -48,6 +48,7 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
     function setTurntableFee(uint256 fee) external onlyOwner {
         require(fee < 1e4);
         turntableFee = fee;
+        emit SetTurntableFee(fee);
     }
 
     function updateBalance() private {
