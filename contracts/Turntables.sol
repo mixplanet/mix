@@ -24,7 +24,7 @@ contract Turntables is Ownable, ITurntables {
     }
 
     uint256 internal currentBalance = 0;
-    uint256 internal totalVolume = 0;
+    uint256 public totalVolume = 0;
 
     uint256 internal constant pointsMultiplier = 2**128;
     uint256 internal pointsPerShare = 0;
@@ -165,6 +165,11 @@ contract Turntables is Ownable, ITurntables {
                 pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(totalVolume));
                 emit Distribute(msg.sender, value);
             }
+        } else {
+            mixEmitter.updatePool(pid);
+            uint256 balance = mix.balanceOf(address(this));
+            uint256 value = balance.sub(currentBalance);
+            if (value > 0) mix.burn(value);
         }
     }
 

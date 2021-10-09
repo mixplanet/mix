@@ -46,6 +46,11 @@ contract KIP7StakingPool is IKIP7StakingPool {
                 emit Distribute(msg.sender, value);
             }
             currentBalance = balance;
+        } else {
+            mixEmitter.updatePool(pid);
+            uint256 balance = mix.balanceOf(address(this));
+            uint256 value = balance.sub(currentBalance);
+            if (value > 0) mix.burn(value);
         }
     }
 

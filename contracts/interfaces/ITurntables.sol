@@ -34,6 +34,7 @@ interface ITurntables {
         uint256 lifetime
     ) external returns (uint256 typeId);
 
+    function totalVolume() external view returns (uint256);
     function typeCount() external view returns (uint256);
     function allowType(uint256 typeId) external;
     function denyType(uint256 typeId) external;
