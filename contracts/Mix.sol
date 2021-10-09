@@ -26,7 +26,7 @@ contract Mix is Ownable, IMix, KIP7, KIP7Burnable, KIP7Metadata("DSC Mix", "MIX"
         booth = _booth;
     }
 
-    function setBurnToBooth(address _burnToBooth) external onlyOwner {
+    function setBurnToBooth(uint256 _burnToBooth) external onlyOwner {
         burnToBooth = _burnToBooth;
         emit SetBurnToBooth(_burnToBooth);
     }
