@@ -16,22 +16,22 @@ contract MixEmitter is Ownable, IMixEmitter {
     }
 
     IMix public mix;
-    uint256 public emitPerBlock;
+    uint256 public emissionPerBlock;
 
     PoolInfo[] public poolInfo;
     uint256 public totalAllocPoint;
 
     bool public started = false;
 
-    constructor(IMix _mix, uint256 _emitPerBlock) public {
+    constructor(IMix _mix, uint256 _emissionPerBlock) public {
         mix = _mix;
-        emitPerBlock = _emitPerBlock;
+        emissionPerBlock = _emissionPerBlock;
     }
 
-    function setEmitPerBlock(uint256 _emitPerBlock) external onlyOwner {
+    function setEmissionPerBlock(uint256 _emissionPerBlock) external onlyOwner {
         massUpdatePools();
-        emitPerBlock = _emitPerBlock;
-        emit SetEmitPerBlock(_emitPerBlock);
+        emissionPerBlock = _emissionPerBlock;
+        emit SetEmissionPerBlock(_emissionPerBlock);
     }
 
     function poolCount() external view returns (uint256) {
@@ -42,7 +42,7 @@ contract MixEmitter is Ownable, IMixEmitter {
         PoolInfo memory pool = poolInfo[pid];
         uint256 _lastEmitBlock = pool.lastEmitBlock;
         if (block.number > _lastEmitBlock && pool.allocPoint != 0) {
-            return block.number.sub(_lastEmitBlock).mul(emitPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
+            return block.number.sub(_lastEmitBlock).mul(emissionPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
         }
         return 0;
     }
@@ -57,7 +57,7 @@ contract MixEmitter is Ownable, IMixEmitter {
             pool.lastEmitBlock = block.number;
             return;
         }
-        uint256 amount = block.number.sub(_lastEmitBlock).mul(emitPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
+        uint256 amount = block.number.sub(_lastEmitBlock).mul(emissionPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
         mix.mint(pool.to, amount);
         pool.lastEmitBlock = block.number;
     }
