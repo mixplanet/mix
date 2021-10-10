@@ -145,6 +145,8 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
                 totalShares = totalShares.sub(1);
                 pointsCorrection[originTo][id] = pointsCorrection[originTo][id].add(int256(pointsPerShare));
                 emit Unlisten(originTo, msg.sender, id);
+            } else {
+                require(!listening[id]);
             }
             shares[turntableId][id] = 1;
             pointsCorrection[turntableId][id] = pointsCorrection[turntableId][id].sub(int256(pointsPerShare));
