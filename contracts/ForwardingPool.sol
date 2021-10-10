@@ -1,10 +1,11 @@
 pragma solidity ^0.5.6;
 
+import "./klaytn-contracts/ownership/Ownable.sol";
 import "./interfaces/IMixEmitter.sol";
 import "./interfaces/IMix.sol";
 import "./interfaces/IForwardingPool.sol";
 
-contract ForwardingPool is IForwardingPool {
+contract ForwardingPool is Ownable, IForwardingPool {
 
     IMixEmitter public mixEmitter;
     IMix public mix;
@@ -20,6 +21,11 @@ contract ForwardingPool is IForwardingPool {
         mix = _mixEmitter.mix();
         pid = _pid;
         to = _to;
+    }
+
+    function setTo(address _to) external onlyOwner {
+        to = _to;
+        emit SetTo(_to);
     }
 
     function forward() external {
