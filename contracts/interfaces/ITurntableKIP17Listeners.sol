@@ -12,7 +12,7 @@ interface ITurntableKIP17Listeners {
     
     function shares(uint256 turntableId, uint256 id) external view returns (uint256);
     function accumulativeOf(uint256 turntableId, uint256 id) external view returns (uint256);
-    function claimedOf(uint256 turntableId, uint256 id) external view returns (uint256);
+    function realClaimedOf(uint256 turntableId, uint256 id) external view returns (uint256);
     function claimableOf(uint256 turntableId, uint256 id) external view returns (uint256);
     function claim(uint256 turntableId, uint256[] calldata ids) external;
 

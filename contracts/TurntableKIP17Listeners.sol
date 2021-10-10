@@ -47,6 +47,7 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
     uint256 private pointsPerShare = 0;
     mapping(uint256 => mapping(uint256 => int256)) private pointsCorrection;
     mapping(uint256 => mapping(uint256 => uint256)) private claimed;
+    mapping(uint256 => mapping(uint256 => uint256)) private realClaimed;
 
     function setTurntableFee(uint256 fee) external onlyOwner {
         require(fee < 1e4);
@@ -72,8 +73,8 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
         }
     }
 
-    function claimedOf(uint256 turntableId, uint256 id) public view returns (uint256) {
-        return claimed[turntableId][id];
+    function realClaimedOf(uint256 turntableId, uint256 id) public view returns (uint256) {
+        return realClaimed[turntableId][id];
     }
 
     function accumulativeOf(uint256 turntableId, uint256 id) public view returns (uint256) {
@@ -131,6 +132,7 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
                 mix.burn(fee);
             }
             mix.transfer(msg.sender, claimable.sub(fee));
+            realClaimed[turntableId][id] = realClaimed[turntableId][id].add(claimable.sub(fee));
         }
     }
 
