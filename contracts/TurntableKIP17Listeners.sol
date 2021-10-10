@@ -34,7 +34,10 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
 
     uint256 private currentBalance = 0;
     uint256 public totalShares = 0;
-    mapping(uint256 => mapping(uint256 => uint256)) public shares;
+    mapping(uint256 => mapping(uint256 => bool)) public shares;
+
+    mapping(uint256 => uint256[]) public listeners;
+    mapping(uint256 => uint256) private listenersIndex;
 
     uint256 public turntableFee = 300; // 1e4
     mapping(uint256 => uint256) public listeningTo;
@@ -82,7 +85,7 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
                 _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(totalShares));
             }
             return
-                uint256(int256(_pointsPerShare.mul(shares[turntableId][id])).add(pointsCorrection[turntableId][id]))
+                uint256(int256(shares[turntableId][id] == true ? _pointsPerShare : 0).add(pointsCorrection[turntableId][id]))
                     .div(pointsMultiplier);
         }
         return 0;
@@ -95,7 +98,7 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
 
     function _accumulativeOf(uint256 turntableId, uint256 id) private view returns (uint256) {
         return
-            uint256(int256(pointsPerShare.mul(shares[turntableId][id])).add(pointsCorrection[turntableId][id])).div(
+            uint256(int256(shares[turntableId][id] == true ? pointsPerShare : 0).add(pointsCorrection[turntableId][id])).div(
                 pointsMultiplier
             );
     }
@@ -139,17 +142,33 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
         for (uint256 i = 0; i < length; i = i + 1) {
             uint256 id = ids[i];
             require(nft.ownerOf(id) == msg.sender);
+
             if (listening[id] && listeningTo[id] != turntableId) {
                 uint256 originTo = listeningTo[id];
                 _claim(originTo, id);
-                shares[originTo][id] = 0;
+                shares[originTo][id] = false;
                 totalShares = totalShares.sub(1);
+                
+                uint256 lastIndex = listeners[originTo].length.sub(1);
+                uint256 index = listenersIndex[id];
+                if (index != lastIndex) {
+                    uint256 last = listeners[originTo][lastIndex];
+                    listeners[originTo][index] = last;
+                    listenersIndex[last] = index;
+                }
+                listeners[originTo].length--;
+                
                 pointsCorrection[originTo][id] = pointsCorrection[originTo][id].add(int256(pointsPerShare));
                 emit Unlisten(originTo, msg.sender, id);
             } else {
                 require(!listening[id]);
             }
-            shares[turntableId][id] = 1;
+
+            shares[turntableId][id] = true;
+            
+            listenersIndex[id] = listeners[turntableId].length;
+            listeners[turntableId].push(id);
+            
             pointsCorrection[turntableId][id] = pointsCorrection[turntableId][id].sub(int256(pointsPerShare));
             listeningTo[id] = turntableId;
             listening[id] = true;
@@ -164,11 +183,25 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
         for (uint256 i = 0; i < length; i = i + 1) {
             uint256 id = ids[i];
             _claim(turntableId, id);
-            shares[turntableId][id] = 0;
+            shares[turntableId][id] = false;
+            
+            uint256 lastIndex = listeners[turntableId].length.sub(1);
+            uint256 index = listenersIndex[id];
+            if (index != lastIndex) {
+                uint256 last = listeners[turntableId][lastIndex];
+                listeners[turntableId][index] = last;
+                listenersIndex[last] = index;
+            }
+            listeners[turntableId].length--;
+
             pointsCorrection[turntableId][id] = pointsCorrection[turntableId][id].add(int256(pointsPerShare));
             delete listeningTo[id];
             delete listening[id];
             emit Unlisten(turntableId, msg.sender, id);
         }
+    }
+
+    function listenerCount(uint256 turntableId) external view returns (uint256) {
+        return listeners[turntableId].length;
     }
 }
