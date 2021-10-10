@@ -134,6 +134,23 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
         }
     }
 
+    function _unlisten(uint256 turntableId, uint256 id) internal {
+        
+        uint256 lastIndex = listeners[turntableId].length.sub(1);
+        uint256 index = listenersIndex[id];
+        if (index != lastIndex) {
+            uint256 last = listeners[turntableId][lastIndex];
+            listeners[turntableId][index] = last;
+            listenersIndex[last] = index;
+        }
+        listeners[turntableId].length--;
+        
+        _claim(turntableId, id);
+        shares[turntableId][id] = false;
+        pointsCorrection[turntableId][id] = pointsCorrection[turntableId][id].add(int256(pointsPerShare));
+        emit Unlisten(turntableId, msg.sender, id);
+    }
+
     function listen(uint256 turntableId, uint256[] calldata ids) external {
         require(turntables.exists(turntableId));
         updateBalance();
@@ -144,22 +161,8 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
             require(nft.ownerOf(id) == msg.sender);
 
             if (listening[id] && listeningTo[id] != turntableId) {
-                uint256 originTo = listeningTo[id];
-                _claim(originTo, id);
-                shares[originTo][id] = false;
                 totalShares = totalShares.sub(1);
-                
-                uint256 lastIndex = listeners[originTo].length.sub(1);
-                uint256 index = listenersIndex[id];
-                if (index != lastIndex) {
-                    uint256 last = listeners[originTo][lastIndex];
-                    listeners[originTo][index] = last;
-                    listenersIndex[last] = index;
-                }
-                listeners[originTo].length--;
-                
-                pointsCorrection[originTo][id] = pointsCorrection[originTo][id].add(int256(pointsPerShare));
-                emit Unlisten(originTo, msg.sender, id);
+                _unlisten(listeningTo[id], id);
             } else {
                 require(!listening[id]);
             }
@@ -182,22 +185,10 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
         totalShares = totalShares.sub(length);
         for (uint256 i = 0; i < length; i = i + 1) {
             uint256 id = ids[i];
-            _claim(turntableId, id);
-            shares[turntableId][id] = false;
-            
-            uint256 lastIndex = listeners[turntableId].length.sub(1);
-            uint256 index = listenersIndex[id];
-            if (index != lastIndex) {
-                uint256 last = listeners[turntableId][lastIndex];
-                listeners[turntableId][index] = last;
-                listenersIndex[last] = index;
-            }
-            listeners[turntableId].length--;
-
-            pointsCorrection[turntableId][id] = pointsCorrection[turntableId][id].add(int256(pointsPerShare));
+            require(listening[id] && listeningTo[id] == turntableId);
+            _unlisten(turntableId, id);
             delete listeningTo[id];
             delete listening[id];
-            emit Unlisten(turntableId, msg.sender, id);
         }
     }
 
