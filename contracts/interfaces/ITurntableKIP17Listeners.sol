@@ -18,4 +18,7 @@ interface ITurntableKIP17Listeners {
 
     function listen(uint256 turntableId, uint256[] calldata ids) external;
     function unlisten(uint256 turntableId, uint256[] calldata ids) external;
+    
+    function listeners(uint256 turntableId, uint256 index) external view returns (uint256);
+    function listenerCount(uint256 turntableId) external view returns (uint256);
 }
