@@ -33,10 +33,10 @@ contract TurntableKIP7Listeners is Ownable, ITurntableKIP7Listeners {
     }
 
     uint256 private currentBalance = 0;
-    uint256 private totalShares = 0;
+    uint256 public totalShares = 0;
     mapping(uint256 => mapping(address => uint256)) public shares;
 
-    uint256 private turntableFee = 300; // 1e4
+    uint256 public turntableFee = 300; // 1e4
 
     uint256 private constant pointsMultiplier = 2**128;
     uint256 private pointsPerShare = 0;
@@ -128,6 +128,7 @@ contract TurntableKIP7Listeners is Ownable, ITurntableKIP7Listeners {
     }
 
     function listen(uint256 turntableId, uint256 amount) external {
+        require(turntables.exists(turntableId));
         updateBalance();
         totalShares = totalShares.add(amount);
         shares[turntableId][msg.sender] = shares[turntableId][msg.sender].add(amount);

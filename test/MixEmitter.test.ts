@@ -177,4 +177,71 @@ describe("MixEmitter", () => {
         await expect(() => mine()).to.changeTokenBalances(mix, [poolB], [0]);   //122
         expect((await emitter.poolInfo(1)).lastEmitBlock).to.be.equal(122);
     });
+
+    it("should be that setEmissionPerBlock function work properly", async () => {
+        const { alice, poolA, poolB, mix, emitter } = await setupTest();
+
+        await emitter.add(poolA.address, 500);
+        await emitter.add(poolB.address, 300);
+
+        await mineTo(90);
+        await expect(() => emitter.updatePool(0)).to.changeTokenBalance(mix, poolA, 0);
+        await expect(() => emitter.updatePool(1)).to.changeTokenBalance(mix, poolB, 0);
+        
+        await expect(emitter.connect(alice).setEmissionPerBlock(emissionPerBlock.mul(2))).to.be.reverted;
+
+        await mineTo(100);
+        await emitter.start(); //100
+
+        await autoMining(false);
+        await mineTo(110);
+        await emitter.updatePool(0);
+        await emitter.updatePool(1);
+        let reward0 = emissionPerBlock.mul(10).mul(500).div(800);
+        let reward1 = emissionPerBlock.mul(10).mul(300).div(800);
+        await expect(() => mine()).to.changeTokenBalances(mix, [poolA, poolB], [reward0, reward1]); //110
+
+        expect((await emitter.poolInfo(0)).lastEmitBlock).to.be.equal(110);
+        expect((await emitter.poolInfo(1)).lastEmitBlock).to.be.equal(110);
+        
+        expect(await mix.balanceOf(poolA.address)).to.be.equal(reward0);
+        expect(await mix.balanceOf(poolB.address)).to.be.equal(reward1);
+
+        await mineTo(115);
+        await emitter.setEmissionPerBlock(emissionPerBlock.mul(2));
+        await mine();
+        
+        expect((await emitter.poolInfo(0)).lastEmitBlock).to.be.equal(115);
+        expect((await emitter.poolInfo(1)).lastEmitBlock).to.be.equal(115);
+
+        reward0 = reward0.add(reward0.div(2));
+        reward1 = reward1.add(reward1.div(2));
+
+        expect(await mix.balanceOf(poolA.address)).to.be.equal(reward0);
+        expect(await mix.balanceOf(poolB.address)).to.be.equal(reward1);
+
+        autoMining(true);
+        await mineTo(120);
+        await emitter.updatePool(0);
+
+        expect((await emitter.poolInfo(0)).lastEmitBlock).to.be.equal(120);
+        expect((await emitter.poolInfo(1)).lastEmitBlock).to.be.equal(115);
+
+        reward0 = reward0.add(emissionPerBlock.mul(2).mul(5).mul(500).div(800));
+
+        expect(await mix.balanceOf(poolA.address)).to.be.equal(reward0);
+        expect(await mix.balanceOf(poolB.address)).to.be.equal(reward1);
+
+        await mineTo(130);
+        await emitter.updatePool(1);
+        await mine();
+
+        expect((await emitter.poolInfo(0)).lastEmitBlock).to.be.equal(120);
+        expect((await emitter.poolInfo(1)).lastEmitBlock).to.be.equal(130);
+
+        reward1 = reward1.add(emissionPerBlock.mul(2).mul(15).mul(300).div(800));
+
+        expect(await mix.balanceOf(poolA.address)).to.be.equal(reward0);
+        expect(await mix.balanceOf(poolB.address)).to.be.equal(reward1);
+    });
 });
