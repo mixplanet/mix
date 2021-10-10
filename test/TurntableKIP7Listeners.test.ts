@@ -334,6 +334,9 @@ describe("TurntableKIP7Listeners", () => {
         await turntables.connect(erin).buy(0);
         await turntables.connect(frank).buy(0);
 
+        const erinBalance = await mix.balanceOf(erin.address);
+        const frankBalance = await mix.balanceOf(frank.address);
+
         autoMining(false);
         await mineTo(100);
         await table7Listeners.connect(alice).listen(0, 10);
@@ -397,11 +400,11 @@ describe("TurntableKIP7Listeners", () => {
                 (await table7Listeners.claimableOf(2, carol.address)).toString()
             );
         }
-        {
-            console.log(`claimable At ${await getBlock()}th block`);
-            await checkC();
-            console.log("");
-        }
+        // {
+        //     console.log(`claimable At ${await getBlock()}th block`);
+        //     await checkC();
+        //     console.log("");
+        // }
 
         await mineTo(110);
         await table7Listeners.connect(bob).listen(0, 10);
@@ -490,9 +493,9 @@ describe("TurntableKIP7Listeners", () => {
         // }
 
         await mineTo(200);
-        await table7Listeners.connect(alice).claim([0,1,2]);
-        await table7Listeners.connect(bob).claim([0,1,2]);
-        await table7Listeners.connect(carol).claim([0,1,2]);
+        await table7Listeners.connect(alice).claim([0, 1, 2]);
+        await table7Listeners.connect(bob).claim([0, 1, 2]);
+        await table7Listeners.connect(carol).claim([0, 1, 2]);
         await mine();
 
         // console.log(
@@ -507,5 +510,12 @@ describe("TurntableKIP7Listeners", () => {
         //     "carol",
         //     (await mix.balanceOf(carol.address)).toString()
         // );
+
+        expect(await mix.balanceOf(alice.address)).to.closeTo(BigNumber.from(2805022), 10);
+        expect(await mix.balanceOf(bob.address)).to.closeTo(BigNumber.from(4785123), 10);
+        expect(await mix.balanceOf(carol.address)).to.closeTo(BigNumber.from(2109855), 10);
+
+        expect((await mix.balanceOf(erin.address)).sub(erinBalance)).to.closeTo(BigNumber.from(231545), 10);
+        expect((await mix.balanceOf(frank.address)).sub(frankBalance)).to.closeTo(BigNumber.from(68455), 10);
     });
 });
