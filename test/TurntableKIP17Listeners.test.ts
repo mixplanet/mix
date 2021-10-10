@@ -86,36 +86,6 @@ describe("TurntableKIP17Listeners", () => {
         await ethers.provider.send("hardhat_reset", []);
     });
 
-    async function checkClaimable(
-        table17Listeners: TurntableKIP17Listeners,
-        turntableIds: number[],
-        ids: number[],
-        amounts: BigNumberish[]
-    ) {
-        const length = turntableIds.length;
-        for (let i = 0; i < length; i++) {
-            expect(await table17Listeners.claimableOf(turntableIds[i], ids[i]), `fail with ${i}th id`).to.be.closeTo(
-                BigNumber.from(amounts[i]),
-                20 //due to solidity math
-            );
-        }
-    }
-
-    async function checkClaimed(
-        table17Listeners: TurntableKIP17Listeners,
-        turntableIds: number[],
-        ids: number[],
-        amounts: BigNumberish[]
-    ) {
-        const length = turntableIds.length;
-        for (let i = 0; i < length; i++) {
-            expect(await table17Listeners.claimedOf(turntableIds[i], ids[i]), `fail with ${i}th id`).to.be.closeTo(
-                BigNumber.from(amounts[i]),
-                20 //due to solidity math
-            );
-        }
-    }
-
     async function checkMixBalance(mix: Mix, users: SignerWithAddress[], amounts: BigNumberish[]) {
         const length = users.length;
         for (let i = 0; i < length; i++) {
@@ -284,9 +254,22 @@ describe("TurntableKIP17Listeners", () => {
             bob,
             emissionPerBlock.div(10).mul(97).div(100).mul(3)
         ); //103b
+
+        await mine(10); //113b
+        await expect(() => table17Listeners.connect(bob).claim(0, [0])).to.changeTokenBalance(
+            mix,
+            bob,
+            emissionPerBlock.div(10).mul(97).div(100).mul(11)
+        ); //114b
+        await nft.connect(bob).transferFrom(bob.address, alice.address, 0); //115b
+        await expect(() => table17Listeners.connect(alice).claim(0, [0])).to.changeTokenBalance(
+            mix,
+            alice,
+            emissionPerBlock.div(10).mul(97).div(100).mul(2)
+        ); //116b
     });
 
-    it("should be that even if the turntable is destroyed during listening, listeners can claim their mix and fee is burned not goes to turntable's last owner", async () => {
+    it("should be that even if the turntable is destroyed during listening, listeners can claim their mix and fee doesn't go to turntable's last owner but is burned", async () => {
         const { table17Listeners, turntables, emitter, mix, booth, alice, bob, carol, erin } = await setupTest();
 
         await turntables.addType(1000, 500, 10, 300);
@@ -332,6 +315,11 @@ describe("TurntableKIP17Listeners", () => {
 
         await checkMixBalance(mix, [erin, bob, carol], [erinBalance, claimedB, claimedC]);
         expect(await mix.balanceOf(booth.address)).to.be.equal(boothMixBalance.add(burned.mul(3).div(1000)));
+
+        await table17Listeners.connect(bob).claim(0, [3]);
+        await expect(table17Listeners.connect(bob).listen(0, [4])).to.be.reverted;
+        await table17Listeners.connect(bob).unlisten(0, [3]);
+        await expect(table17Listeners.connect(bob).listen(0, [3])).to.be.reverted;
     });
 
     it("should be that fee goes correctly when listeners claim their mix", async () => {
@@ -418,189 +406,270 @@ describe("TurntableKIP17Listeners", () => {
         await expect(() => table17Listeners.connect(erin).claim(0, [10])).to.changeTokenBalance(mix, erin, claimableB);
     });
 
-    // it("overall test", async () => {
-    //     const { table17Listeners, turntables, mix, alice, bob, carol, erin, frank } = await setupTest();
+    it("should be that listeners indexing works propely", async () => {
+        const { table17Listeners, turntables, mix, alice, bob, erin } = await setupTest();
 
-    //     await turntables.addType(1000, 500, 10, 300);
-    //     await turntables.addType(2000, 700, 15, 500);
-    //     await turntables.allowType(0);
-    //     await turntables.allowType(1);
-    //     await turntables.connect(erin).buy(0);
-    //     await turntables.connect(erin).buy(0);
-    //     await turntables.connect(frank).buy(0);
+        await turntables.addType(1000, 500, 10, 50);
+        await turntables.allowType(0);
+        await turntables.connect(erin).buy(0);
+        await turntables.connect(erin).buy(0);
+        await turntables.connect(erin).buy(0);
 
-    //     autoMining(false);
-    //     await mineTo(100);
-    //     await table17Listeners.connect(alice).listen(0, 10);
-    //     await table17Listeners.connect(alice).listen(1, 10);
-    //     await table17Listeners.connect(carol).listen(2, 10);
-    //     await mine();
+        expect(await table17Listeners.callStatic.listenerCount(0)).to.be.equal(0);
+        await table17Listeners.connect(alice).listen(0, [0, 2, 1]);
 
-    //     async function checkC() {
-    //         console.log(
-    //             "alice",
-    //             (await table17Listeners.shares(0, alice.address)).toString(),
-    //             "",
-    //             (await table17Listeners.claimableOf(0, alice.address)).toString()
-    //         );
-    //         console.log(
-    //             "alice",
-    //             (await table17Listeners.shares(1, alice.address)).toString(),
-    //             "",
-    //             (await table17Listeners.claimableOf(1, alice.address)).toString()
-    //         );
-    //         console.log(
-    //             "alice",
-    //             (await table17Listeners.shares(2, alice.address)).toString(),
-    //             "",
-    //             (await table17Listeners.claimableOf(2, alice.address)).toString()
-    //         );
-    //         console.log(
-    //             "bob",
-    //             (await table17Listeners.shares(0, bob.address)).toString(),
-    //             "",
-    //             (await table17Listeners.claimableOf(0, bob.address)).toString()
-    //         );
-    //         console.log(
-    //             "bob",
-    //             (await table17Listeners.shares(1, bob.address)).toString(),
-    //             "",
-    //             (await table17Listeners.claimableOf(1, bob.address)).toString()
-    //         );
-    //         console.log(
-    //             "bob",
-    //             (await table17Listeners.shares(2, bob.address)).toString(),
-    //             "",
-    //             (await table17Listeners.claimableOf(2, bob.address)).toString()
-    //         );
-    //         console.log(
-    //             "carol",
-    //             (await table17Listeners.shares(0, carol.address)).toString(),
-    //             "",
-    //             (await table17Listeners.claimableOf(0, carol.address)).toString()
-    //         );
-    //         console.log(
-    //             "carol",
-    //             (await table17Listeners.shares(1, carol.address)).toString(),
-    //             "",
-    //             (await table17Listeners.claimableOf(1, carol.address)).toString()
-    //         );
-    //         console.log(
-    //             "carol",
-    //             (await table17Listeners.shares(2, carol.address)).toString(),
-    //             "",
-    //             (await table17Listeners.claimableOf(2, carol.address)).toString()
-    //         );
-    //     }
-    //     {
-    //         console.log(`claimable At ${await getBlock()}th block`);
-    //         await checkC();
-    //         console.log("");
-    //     }
+        expect(await table17Listeners.callStatic.listenerCount(0)).to.be.equal(3);
+        expect(await table17Listeners.callStatic.listeners(0, 0)).to.be.equal(0);
+        expect(await table17Listeners.callStatic.listeners(0, 1)).to.be.equal(2);
+        expect(await table17Listeners.callStatic.listeners(0, 2)).to.be.equal(1);
 
-    //     await mineTo(110);
-    //     await table17Listeners.connect(bob).listen(0, 10);
-    //     await mine();
-    //     // {
-    //     //     console.log(`claimable At ${await getBlock()}th block`);
-    //     //     await checkC();
-    //     //     console.log("");
-    //     // }
+        await table17Listeners.connect(bob).listen(0, [4]);
+        expect(await table17Listeners.callStatic.listenerCount(0)).to.be.equal(4);
+        expect(await table17Listeners.callStatic.listeners(0, 3)).to.be.equal(4);
 
-    //     await mineTo(120);
-    //     await table17Listeners.connect(alice).unlisten(0, 5);
-    //     await table17Listeners.connect(bob).listen(0, 10);
-    //     await table17Listeners.connect(carol).listen(0, 5);
-    //     await mine();
-    //     // {
-    //     //     console.log(`claimable At ${await getBlock()}th block`);
-    //     //     await checkC();
-    //     //     console.log("");
-    //     // }
+        await table17Listeners.connect(alice).unlisten(0, [0, 1]);
+        expect(await table17Listeners.callStatic.listenerCount(0)).to.be.equal(2);
+        expect(await table17Listeners.callStatic.listeners(0, 0)).to.be.equal(4);
+        expect(await table17Listeners.callStatic.listeners(0, 1)).to.be.equal(2);
 
-    //     await mineTo(130);
-    //     await table17Listeners.connect(bob).listen(0, 10);
-    //     await table17Listeners.connect(bob).listen(1, 50);
-    //     await mine();
-    //     // {
-    //     //     console.log(`claimable At ${await getBlock()}th block`);
-    //     //     await checkC();
-    //     //     console.log("");
-    //     // }
+        expect(await table17Listeners.callStatic.listenerCount(1)).to.be.equal(0);
+        await table17Listeners.connect(alice).listen(1, [1, 2]);
 
-    //     await mineTo(140);
-    //     await mine();
-    //     // {
-    //     //     console.log(`claimable At ${await getBlock()}th block`);
-    //     //     await checkC();
-    //     //     console.log("");
-    //     // }
+        expect(await table17Listeners.callStatic.listenerCount(0)).to.be.equal(1);
+        expect(await table17Listeners.callStatic.listenerCount(1)).to.be.equal(2);
 
-    //     await mineTo(150);
-    //     await table17Listeners.connect(alice).listen(1, 5);
-    //     await table17Listeners.connect(bob).listen(2, 20);
-    //     await table17Listeners.connect(carol).listen(2, 5);
-    //     await mine();
-    //     // {
-    //     //     console.log(`claimable At ${await getBlock()}th block`);
-    //     //     await checkC();
-    //     //     console.log("");
-    //     // }
+        await table17Listeners.connect(alice).listen(2, [0, 1, 2]);
+        expect(await table17Listeners.callStatic.listenerCount(0)).to.be.equal(1);
+        expect(await table17Listeners.callStatic.listenerCount(1)).to.be.equal(0);
+        expect(await table17Listeners.callStatic.listenerCount(2)).to.be.equal(3);
+    });
 
-    //     await mineTo(160);
-    //     await mine();
-    //     // {
-    //     //     console.log(`claimable At ${await getBlock()}th block`);
-    //     //     await checkC();
-    //     //     console.log("");
-    //     // }
+    it("overall test", async () => {
+        const { table17Listeners, turntables, mix, nft, booth, emitter, deployer, alice, bob, carol, erin, frank } =
+            await setupTest();
 
-    //     await mineTo(170);
-    //     await table17Listeners.connect(bob).unlisten(0, 20);
-    //     await table17Listeners.connect(bob).unlisten(1, 20);
-    //     await mine();
-    //     // {
-    //     //     console.log(`claimable At ${await getBlock()}th block`);
-    //     //     await checkC();
-    //     //     console.log("");
-    //     // }
+        await turntables.addType(1000, 500, 10, 300);
+        await turntables.addType(2000, 700, 15, 500);
+        await turntables.allowType(0);
+        await turntables.allowType(1);
+        await turntables.connect(erin).buy(0); //t0-erin
+        await turntables.connect(frank).buy(0); //t1-frank
+        {
+            await nft.connect(bob).transferFrom(bob.address, alice.address, 3);
+            await nft.connect(bob).transferFrom(bob.address, alice.address, 4);
 
-    //     await mineTo(180);
-    //     await table17Listeners.connect(alice).listen(0, 15);
-    //     await table17Listeners.connect(alice).listen(1, 15);
-    //     await table17Listeners.connect(carol).listen(1, 20);
-    //     await mine();
-    //     // {
-    //     //     console.log(`claimable At ${await getBlock()}th block`);
-    //     //     await checkC();
-    //     //     console.log("");
-    //     // }
+            await nft.connect(carol).transferFrom(carol.address, bob.address, 5);
+            await nft.transferFrom(deployer.address, bob.address, 6);
+            await nft.transferFrom(deployer.address, bob.address, 7);
+            await nft.transferFrom(deployer.address, bob.address, 8);
+            await nft.transferFrom(deployer.address, bob.address, 9);
 
-    //     await mineTo(190);
-    //     await mine();
-    //     // {
-    //     //     console.log(`claimable At ${await getBlock()}th block`);
-    //     //     await checkC();
-    //     //     console.log("");
-    //     // }
+            await nft.transferFrom(deployer.address, carol.address, 10);
+            await nft.transferFrom(deployer.address, carol.address, 11);
+            await nft.transferFrom(deployer.address, carol.address, 12);
+            await nft.transferFrom(deployer.address, carol.address, 13);
+            await nft.transferFrom(deployer.address, carol.address, 14);
 
-    //     await mineTo(200);
-    //     await table17Listeners.connect(alice).claim([0, 1, 2]);
-    //     await table17Listeners.connect(bob).claim([0, 1, 2]);
-    //     await table17Listeners.connect(carol).claim([0, 1, 2]);
-    //     await mine();
+            await nft.transferFrom(deployer.address, alice.address, 15);
+            await nft.transferFrom(deployer.address, alice.address, 16);
+            await nft.transferFrom(deployer.address, alice.address, 17);
+            await nft.transferFrom(deployer.address, alice.address, 18);
+            await nft.transferFrom(deployer.address, alice.address, 19);
+            //alice : 0-4, 15-19; bob : 5-9; carol : 10-14;
+        }
 
-    //     // console.log(
-    //     //     "alice",
-    //     //     (await mix.balanceOf(alice.address)).toString()
-    //     // );
-    //     // console.log(
-    //     //     "bob",
-    //     //     (await mix.balanceOf(bob.address)).toString()
-    //     // );
-    //     // console.log(
-    //     //     "carol",
-    //     //     (await mix.balanceOf(carol.address)).toString()
-    //     // );
-    // });
+        let aliceBalance = Zero;
+        let bobBalance = Zero;
+        let carolBalance = Zero;
+
+        autoMining(false);
+        await mineTo(100);
+        await table17Listeners.connect(alice).listen(0, [0, 1, 2, 3, 4]);
+        await table17Listeners.connect(bob).listen(0, [5, 6, 7, 8, 9]);
+        await mine();
+        autoMining(true);
+
+        await mineTo(110);
+        await table17Listeners.connect(carol).listen(1, [10, 11, 12, 13, 14]);
+
+        await mineTo(120);
+        await table17Listeners.connect(carol).unlisten(1, [10, 11, 12, 13, 14]);
+        await expect(table17Listeners.connect(carol).unlisten(1, [10])).to.be.reverted;
+        await expect(table17Listeners.connect(carol).unlisten(1, [10, 11, 12])).to.be.reverted;
+        await expect(table17Listeners.connect(carol).unlisten(0, [10, 11, 12])).to.be.reverted;
+        {
+            expect(await table17Listeners.realClaimedOf(1, 10)).to.closeTo(BigNumber.from(64667), 20);
+            expect(await table17Listeners.realClaimedOf(1, 11)).to.closeTo(BigNumber.from(64667), 20);
+            expect(await table17Listeners.realClaimedOf(1, 12)).to.closeTo(BigNumber.from(64667), 20);
+            expect(await table17Listeners.realClaimedOf(1, 13)).to.closeTo(BigNumber.from(64667), 20);
+            expect(await table17Listeners.realClaimedOf(1, 14)).to.closeTo(BigNumber.from(64667), 20);
+            carolBalance = BigNumber.from(64667).mul(5);
+            expect(await mix.balanceOf(carol.address)).to.closeTo(carolBalance, 20);
+
+            expect(await table17Listeners.claimableOf(0, 10)).to.closeTo(Zero, 20);
+            expect(await table17Listeners.claimableOf(0, 11)).to.closeTo(Zero, 20);
+            expect(await table17Listeners.claimableOf(0, 12)).to.closeTo(Zero, 20);
+            expect(await table17Listeners.claimableOf(0, 13)).to.closeTo(Zero, 20);
+            expect(await table17Listeners.claimableOf(0, 14)).to.closeTo(Zero, 20);
+        }
+
+        await mineTo(130);
+        await table17Listeners.connect(alice).listen(1, [3, 4]);
+        {
+            expect(await table17Listeners.realClaimedOf(0, 3)).to.closeTo(BigNumber.from(258667), 20);
+            expect(await table17Listeners.realClaimedOf(0, 4)).to.closeTo(BigNumber.from(258667), 20);
+            aliceBalance = BigNumber.from(258667).mul(2);
+            expect(await mix.balanceOf(alice.address)).to.closeTo(aliceBalance, 20);
+
+            expect(await table17Listeners.realClaimedOf(1, 3)).to.closeTo(Zero, 20);
+            expect(await table17Listeners.realClaimedOf(1, 4)).to.closeTo(Zero, 20);
+            expect(await table17Listeners.claimableOf(0, 3)).to.closeTo(Zero, 20);
+            expect(await table17Listeners.claimableOf(0, 4)).to.closeTo(Zero, 20);
+        }
+
+        await mineTo(140);
+        autoMining(false);
+        await nft.connect(bob).transferFrom(bob.address, carol.address, 7);
+        await nft.connect(bob).transferFrom(bob.address, carol.address, 8);
+        await nft.connect(bob).transferFrom(bob.address, carol.address, 9);
+        await mine();
+        autoMining(true);
+
+        await mineTo(150);
+        await turntables.connect(erin).buy(1); //t2-erin
+
+        await expect(table17Listeners.connect(alice).listen(3, [15])).to.be.reverted;
+        await expect(table17Listeners.connect(alice).listen(3, [15, 16, 17, 18, 19])).to.be.reverted;
+
+        await mineTo(160);
+        await table17Listeners.connect(alice).listen(2, [15, 16, 17, 18, 19]);
+
+        await mineTo(170);
+        await table17Listeners.connect(carol).claim(0, [8, 9]);
+        {
+            expect(await table17Listeners.claimableOf(0, 0)).to.closeTo(BigNumber.from(614333), 20);
+            expect(await table17Listeners.realClaimedOf(0, 8)).to.closeTo(BigNumber.from(614333), 20);
+            expect(await mix.balanceOf(alice.address)).to.closeTo(aliceBalance, 20);
+            carolBalance = carolBalance.add(BigNumber.from(614333).mul(2));
+            expect(await mix.balanceOf(carol.address)).to.closeTo(carolBalance, 20);
+        }
+
+        await expect(table17Listeners.connect(bob).listen(0, [5])).to.be.reverted;
+        await expect(table17Listeners.connect(alice).listen(2, [5])).to.be.reverted;
+
+        await mineTo(180);
+        await table17Listeners.connect(bob).listen(2, [5, 6]);
+        {
+            expect(await table17Listeners.realClaimedOf(0, 5)).to.closeTo(BigNumber.from(679000), 20);
+            expect(await table17Listeners.realClaimedOf(0, 6)).to.closeTo(BigNumber.from(679000), 20);
+            bobBalance = BigNumber.from(679000).mul(2);
+            expect(await mix.balanceOf(bob.address)).to.closeTo(bobBalance, 20);
+
+            expect(await table17Listeners.realClaimedOf(2, 5)).to.closeTo(Zero, 20);
+            expect(await table17Listeners.realClaimedOf(2, 6)).to.closeTo(Zero, 20);
+            expect(await table17Listeners.claimableOf(0, 5)).to.closeTo(Zero, 20);
+            expect(await table17Listeners.claimableOf(0, 6)).to.closeTo(Zero, 20);
+        }
+
+        await mineTo(190);
+        autoMining(false);
+        await table17Listeners.connect(alice).claim(2, [15, 16, 17, 18, 19]);
+        await table17Listeners.connect(alice).unlisten(2, [17, 18, 19]);
+        await mine();
+        autoMining(true);
+        await nft.connect(alice).transferFrom(alice.address, bob.address, 15);
+        await nft.connect(alice).transferFrom(alice.address, bob.address, 16);
+        {
+            expect(await table17Listeners.realClaimedOf(2, 15)).to.closeTo(BigNumber.from(194000), 20);
+            expect(await table17Listeners.realClaimedOf(2, 16)).to.closeTo(BigNumber.from(194000), 20);
+            expect(await table17Listeners.realClaimedOf(2, 17)).to.closeTo(BigNumber.from(194000), 20);
+            expect(await table17Listeners.realClaimedOf(2, 18)).to.closeTo(BigNumber.from(194000), 20);
+            expect(await table17Listeners.realClaimedOf(2, 19)).to.closeTo(BigNumber.from(194000), 20);
+            aliceBalance = aliceBalance.add(BigNumber.from(194000).mul(5));
+            expect(await mix.balanceOf(alice.address)).to.closeTo(aliceBalance, 20);
+        }
+
+        await mineTo(200);
+        autoMining(false);
+        await emitter.set(1, 300);
+        await emitter.set(2, 200);
+        await mine();
+        autoMining(true);
+
+        await mineTo(210);
+        autoMining(false);
+        await table17Listeners.connect(bob).listen(0, [5, 6]);
+        await table17Listeners.connect(bob).listen(1, [15, 16]);
+        await mine();
+        autoMining(true);
+        {
+            expect(await table17Listeners.realClaimedOf(2, 5)).to.closeTo(BigNumber.from(307167), 20);
+            expect(await table17Listeners.realClaimedOf(2, 6)).to.closeTo(BigNumber.from(307167), 20);
+
+            expect(await table17Listeners.realClaimedOf(2, 15)).to.closeTo(BigNumber.from(194000+242500), 20);
+            expect(await table17Listeners.realClaimedOf(2, 16)).to.closeTo(BigNumber.from(194000+242500), 20);
+            bobBalance = bobBalance.add(BigNumber.from(307167).mul(2).add(BigNumber.from(242500).mul(2)));
+            expect(await mix.balanceOf(bob.address)).to.closeTo(bobBalance, 20);
+        }
+
+        await mine(3);
+        await emitter.updatePool(2);
+
+        await mineTo(220);
+        {
+            expect(await table17Listeners.callStatic.listenerCount(0)).to.equal(8);
+            expect(await table17Listeners.callStatic.listenerCount(1)).to.equal(4);
+            expect(await table17Listeners.callStatic.listenerCount(2)).to.equal(0);
+
+            expect(await mix.balanceOf(alice.address)).to.closeTo(aliceBalance, 20);
+            expect(await mix.balanceOf(bob.address)).to.closeTo(bobBalance, 20);
+            expect(await mix.balanceOf(carol.address)).to.closeTo(carolBalance, 20);
+        }
+
+        await mineTo(230);
+        await table17Listeners.connect(alice).listen(2, [0,1,2,3,4]);
+        {
+            expect(await table17Listeners.realClaimedOf(0, 0)).to.closeTo(BigNumber.from(1309500), 20);
+            expect(await table17Listeners.realClaimedOf(0, 1)).to.closeTo(BigNumber.from(1309500), 20);
+            expect(await table17Listeners.realClaimedOf(0, 2)).to.closeTo(BigNumber.from(1309500), 20);
+            expect(await table17Listeners.realClaimedOf(1, 3)).to.closeTo(BigNumber.from(1309500-258667), 20);
+            expect(await table17Listeners.realClaimedOf(1, 4)).to.closeTo(BigNumber.from(1309500-258667), 20);
+            aliceBalance = aliceBalance.add(BigNumber.from(1309500).mul(3).add(BigNumber.from(1309500-258667).mul(2)));
+            expect(await mix.balanceOf(alice.address)).to.closeTo(aliceBalance, 20);
+        }
+
+        await mineTo(240);
+        await table17Listeners.connect(carol).listen(2, [10, 11, 12]);
+
+        await mineTo(250);
+        await table17Listeners.connect(bob).listen(2, [5,6,15,16]);
+        {
+            expect(await table17Listeners.realClaimedOf(0, 5)).to.closeTo(BigNumber.from(614333+679000), 20);
+            expect(await table17Listeners.realClaimedOf(0, 6)).to.closeTo(BigNumber.from(614333+679000), 20);
+            expect(await table17Listeners.realClaimedOf(1, 15)).to.closeTo(BigNumber.from(614333), 20);
+            expect(await table17Listeners.realClaimedOf(1, 16)).to.closeTo(BigNumber.from(614333), 20);
+
+            bobBalance = bobBalance.add(BigNumber.from(614333).mul(4));
+            expect(await mix.balanceOf(bob.address)).to.closeTo(bobBalance, 20);
+        }
+
+        await turntables.connect(erin).destroy(2);
+        await mineTo(260);
+        autoMining(false);
+        await table17Listeners.connect(carol).claim(0, [7,8,9]);
+        await table17Listeners.connect(carol).claim(2, [10,11,12]);
+        await mine();
+        autoMining(true);
+        {
+            expect(await table17Listeners.realClaimedOf(0, 7)).to.closeTo(BigNumber.from(1729833), 20);
+            expect(await table17Listeners.realClaimedOf(0, 8)).to.closeTo(BigNumber.from(1115500+614333), 20);
+            expect(await table17Listeners.realClaimedOf(0, 9)).to.closeTo(BigNumber.from(1115500+614333), 20);
+            expect(await table17Listeners.realClaimedOf(2, 10)).to.closeTo(BigNumber.from(258667), 20);
+            expect(await table17Listeners.realClaimedOf(2, 11)).to.closeTo(BigNumber.from(258667), 20);
+            expect(await table17Listeners.realClaimedOf(2, 12)).to.closeTo(BigNumber.from(258667), 20);
+
+            carolBalance = carolBalance.add(BigNumber.from(258667).mul(3).add(BigNumber.from(1729833)).add(BigNumber.from(1115500).mul(2)));
+            expect(await mix.balanceOf(carol.address)).to.closeTo(carolBalance, 20);
+        }
+    });
 });
