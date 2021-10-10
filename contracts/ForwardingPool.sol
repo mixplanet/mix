@@ -28,7 +28,7 @@ contract ForwardingPool is Ownable, IForwardingPool {
         emit SetTo(_to);
     }
 
-    function forward() external {
+    function forward() external onlyOwner {
         mixEmitter.updatePool(pid);
         mix.transfer(to, mix.balanceOf(address(this)));
     }
