@@ -132,6 +132,7 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
     }
 
     function listen(uint256 turntableId, uint256[] calldata ids) external {
+        require(turntables.exists(turntableId));
         updateBalance();
         uint256 length = ids.length;
         totalShares = totalShares.add(length);
