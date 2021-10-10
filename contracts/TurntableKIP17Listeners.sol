@@ -115,7 +115,7 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
             uint256 claimable = _claim(turntableId, ids[i]);
             totalClaimable = totalClaimable.add(claimable);
         }
-        currentBalance = currentBalance.sub(totalClaimable);
+        currentBalance = mix.balanceOf(address(this));
     }
 
     function _claim(uint256 turntableId, uint256 id) internal returns (uint256 claimable) {
@@ -135,7 +135,6 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
     }
 
     function _unlisten(uint256 turntableId, uint256 id) internal {
-        
         uint256 lastIndex = listeners[turntableId].length.sub(1);
         uint256 index = listenersIndex[id];
         if (index != lastIndex) {
@@ -149,6 +148,7 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
         shares[turntableId][id] = false;
         pointsCorrection[turntableId][id] = pointsCorrection[turntableId][id].add(int256(pointsPerShare));
         emit Unlisten(turntableId, msg.sender, id);
+        currentBalance = mix.balanceOf(address(this));
     }
 
     function listen(uint256 turntableId, uint256[] calldata ids) external {
