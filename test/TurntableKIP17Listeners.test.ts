@@ -444,6 +444,9 @@ describe("TurntableKIP17Listeners", () => {
         expect(await table17Listeners.callStatic.listenerCount(2)).to.be.equal(3);
     });
 
+    /**
+     * ./etc/TurntableKIP17Listeners_overall_test.png
+     */
     it("overall test", async () => {
         const { table17Listeners, turntables, mix, nft, booth, emitter, deployer, alice, bob, carol, erin, frank } =
             await setupTest();
