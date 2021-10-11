@@ -326,7 +326,11 @@ interface ITurntableKIP7Listeners {
     
     event Listen(uint256 indexed turntableId, address indexed owner, uint256 amount);
     event Unlisten(uint256 indexed turntableId, address indexed owner, uint256 amount);
+    
+    event SetTurntableFee(uint256 fee);
 
+    function totalShares() external view returns (uint256);
+    function turntableFee() external view returns (uint256);
     function shares(uint256 turntableId, address owner) external view returns (uint256);
     function accumulativeOf(uint256 turntableId, address owner) external view returns (uint256);
     function claimedOf(uint256 turntableId, address owner) external view returns (uint256);
@@ -479,9 +483,10 @@ interface IMixEmitter {
 
     event Add(address to, uint256 allocPoint);
     event Set(uint256 indexed pid, uint256 allocPoint);
+    event SetEmissionPerBlock(uint256 emissionPerBlock);
 
     function mix() external view returns (IMix);
-    function emitPerBlock() external view returns (uint256);
+    function emissionPerBlock() external view returns (uint256);
     function started() external view returns (bool);
 
     function poolCount() external view returns (uint256);
@@ -530,6 +535,7 @@ interface ITurntables {
         uint256 lifetime
     ) external returns (uint256 typeId);
 
+    function totalVolume() external view returns (uint256);
     function typeCount() external view returns (uint256);
     function allowType(uint256 typeId) external;
     function denyType(uint256 typeId) external;
@@ -542,9 +548,9 @@ interface ITurntables {
     );
 
     function buy(uint256 typeId) external returns (uint256 turntableId);
-    function turntableCount() external view returns (uint256);
-    function ownerOf(uint256 turntableId) external returns (address);
-    function exists(uint256 turntableId) external returns (bool);
+    function turntableLength() external view returns (uint256);
+    function ownerOf(uint256 turntableId) external view returns (address);
+    function exists(uint256 turntableId) external view returns (bool);
     function charge(uint256 turntableId, uint256 amount) external;
     function destroy(uint256 turntableId) external;
 
@@ -579,10 +585,10 @@ contract TurntableKIP7Listeners is Ownable, ITurntableKIP7Listeners {
     }
 
     uint256 private currentBalance = 0;
-    uint256 private totalShares = 0;
+    uint256 public totalShares = 0;
     mapping(uint256 => mapping(address => uint256)) public shares;
 
-    uint256 private turntableFee = 300; // 1e4
+    uint256 public turntableFee = 300; // 1e4
 
     uint256 private constant pointsMultiplier = 2**128;
     uint256 private pointsPerShare = 0;
@@ -592,6 +598,7 @@ contract TurntableKIP7Listeners is Ownable, ITurntableKIP7Listeners {
     function setTurntableFee(uint256 fee) external onlyOwner {
         require(fee < 1e4);
         turntableFee = fee;
+        emit SetTurntableFee(fee);
     }
 
     function updateBalance() private {
@@ -604,6 +611,11 @@ contract TurntableKIP7Listeners is Ownable, ITurntableKIP7Listeners {
                 emit Distribute(msg.sender, value);
             }
             currentBalance = balance;
+        } else {
+            mixEmitter.updatePool(pid);
+            uint256 balance = mix.balanceOf(address(this));
+            uint256 value = balance.sub(currentBalance);
+            if (value > 0) mix.burn(value);
         }
     }
 
@@ -668,6 +680,7 @@ contract TurntableKIP7Listeners is Ownable, ITurntableKIP7Listeners {
     }
 
     function listen(uint256 turntableId, uint256 amount) external {
+        require(turntables.exists(turntableId));
         updateBalance();
         totalShares = totalShares.add(amount);
         shares[turntableId][msg.sender] = shares[turntableId][msg.sender].add(amount);

@@ -372,9 +372,10 @@ interface IMixEmitter {
 
     event Add(address to, uint256 allocPoint);
     event Set(uint256 indexed pid, uint256 allocPoint);
+    event SetEmissionPerBlock(uint256 emissionPerBlock);
 
     function mix() external view returns (IMix);
-    function emitPerBlock() external view returns (uint256);
+    function emissionPerBlock() external view returns (uint256);
     function started() external view returns (bool);
 
     function poolCount() external view returns (uint256);
@@ -401,16 +402,22 @@ contract MixEmitter is Ownable, IMixEmitter {
     }
 
     IMix public mix;
-    uint256 public emitPerBlock;
+    uint256 public emissionPerBlock;
 
     PoolInfo[] public poolInfo;
     uint256 public totalAllocPoint;
 
     bool public started = false;
 
-    constructor(IMix _mix, uint256 _emitPerBlock) public {
+    constructor(IMix _mix, uint256 _emissionPerBlock) public {
         mix = _mix;
-        emitPerBlock = _emitPerBlock;
+        emissionPerBlock = _emissionPerBlock;
+    }
+
+    function setEmissionPerBlock(uint256 _emissionPerBlock) external onlyOwner {
+        massUpdatePools();
+        emissionPerBlock = _emissionPerBlock;
+        emit SetEmissionPerBlock(_emissionPerBlock);
     }
 
     function poolCount() external view returns (uint256) {
@@ -421,7 +428,7 @@ contract MixEmitter is Ownable, IMixEmitter {
         PoolInfo memory pool = poolInfo[pid];
         uint256 _lastEmitBlock = pool.lastEmitBlock;
         if (block.number > _lastEmitBlock && pool.allocPoint != 0) {
-            return block.number.sub(_lastEmitBlock).mul(emitPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
+            return block.number.sub(_lastEmitBlock).mul(emissionPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
         }
         return 0;
     }
@@ -436,7 +443,7 @@ contract MixEmitter is Ownable, IMixEmitter {
             pool.lastEmitBlock = block.number;
             return;
         }
-        uint256 amount = block.number.sub(_lastEmitBlock).mul(emitPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
+        uint256 amount = block.number.sub(_lastEmitBlock).mul(emissionPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
         mix.mint(pool.to, amount);
         pool.lastEmitBlock = block.number;
     }

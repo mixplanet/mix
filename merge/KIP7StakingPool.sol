@@ -387,9 +387,10 @@ interface IMixEmitter {
 
     event Add(address to, uint256 allocPoint);
     event Set(uint256 indexed pid, uint256 allocPoint);
+    event SetEmissionPerBlock(uint256 emissionPerBlock);
 
     function mix() external view returns (IMix);
-    function emitPerBlock() external view returns (uint256);
+    function emissionPerBlock() external view returns (uint256);
     function started() external view returns (bool);
 
     function poolCount() external view returns (uint256);
@@ -463,6 +464,11 @@ contract KIP7StakingPool is IKIP7StakingPool {
                 emit Distribute(msg.sender, value);
             }
             currentBalance = balance;
+        } else {
+            mixEmitter.updatePool(pid);
+            uint256 balance = mix.balanceOf(address(this));
+            uint256 value = balance.sub(currentBalance);
+            if (value > 0) mix.burn(value);
         }
     }
 
