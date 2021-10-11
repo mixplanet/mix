@@ -417,6 +417,7 @@ interface IKIP7StakingPool {
     function unstake(uint256 amount) external;
 
     function pid() external view returns (uint256);
+    function totalShares() external view returns (uint256);
     function shares(address owner) external view returns (uint256);
 
     function accumulativeOf(address owner) external view returns (uint256);
@@ -446,7 +447,7 @@ contract KIP7StakingPool is IKIP7StakingPool {
     }
 
     uint256 internal currentBalance = 0;
-    uint256 internal totalShares = 0;
+    uint256 public totalShares = 0;
     mapping(address => uint256) public shares;
 
     uint256 internal constant pointsMultiplier = 2**128;
