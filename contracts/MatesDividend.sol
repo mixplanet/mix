@@ -1,26 +1,26 @@
 pragma solidity ^0.5.6;
 
-import "./klaytn-contracts/token/KIP17/IKIP17.sol";
+import "./klaytn-contracts/token/KIP17/IKIP17Enumerable.sol";
 import "./klaytn-contracts/math/SafeMath.sol";
 import "./libraries/SignedSafeMath.sol";
 import "./interfaces/IKIP17Dividend.sol";
 import "./interfaces/IMixEmitter.sol";
 import "./interfaces/IMix.sol";
 
-contract KIP17Dividend is IKIP17Dividend {
+contract MatesDividend is IKIP17Dividend {
     using SafeMath for uint256;
     using SignedSafeMath for int256;
 
     IMixEmitter public mixEmitter;
     IMix public mix;
     uint256 public pid;
-    IKIP17 public nft;
+    IKIP17Enumerable public nft;
     uint256 public maxNFTSupply;
 
     constructor(
         IMixEmitter _mixEmitter,
         uint256 _pid,
-        IKIP17 _nft,
+        IKIP17Enumerable _nft,
         uint256 _maxNFTSupply
     ) public {
         mixEmitter = _mixEmitter;
