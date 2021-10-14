@@ -1,11 +1,13 @@
 pragma solidity ^0.5.6;
 
+import "./IKlayswapAirdropOperator.sol";
+
 interface IKlayswapAirdropPool {
 
-    event SetTo(address indexed to);
+    event SetOperator(IKlayswapAirdropOperator indexed operator);
 
     function pid() external view returns (uint256);
-    function to() external view returns (address);
+    function operator() external view returns (IKlayswapAirdropOperator);
     function forward() external;
 
     function changeNextOwner(address _nextOwner) external;

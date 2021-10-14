@@ -11,31 +11,28 @@ contract KlayswapAirdropPool is Ownable, IKlayswapAirdropPool {
     IMixEmitter public mixEmitter;
     IMix public mix;
     uint256 public pid;
-    address public to;
     IKlayswapAirdropOperator public operator;
 
     constructor(
         IMixEmitter _mixEmitter,
         uint256 _pid,
-        address _to,
         IKlayswapAirdropOperator _operator
     ) public {
         mixEmitter = _mixEmitter;
         mix = _mixEmitter.mix();
         pid = _pid;
-        to = _to;
         operator = _operator;
     }
-
-    function setTo(address _to) external onlyOwner {
-        to = _to;
-        emit SetTo(_to);
+    
+    function setOperator(IKlayswapAirdropOperator _operator) external onlyOwner {
+        operator = _operator;
+        emit SetOperator(_operator);
     }
 
     function forward() external onlyOwner {
         mixEmitter.updatePool(pid);
         uint256 amount = mix.balanceOf(address(this));
-        mix.transfer(to, amount);
+        mix.transfer(address(operator), amount);
         operator.deposit(amount);
     }
 
