@@ -7,7 +7,7 @@ import "./interfaces/IKIP17Dividend.sol";
 import "./interfaces/IMixEmitter.sol";
 import "./interfaces/IMix.sol";
 
-contract MatesDividend is IKIP17Dividend {
+contract MatesPool is IKIP17Dividend {
     using SafeMath for uint256;
     using SignedSafeMath for int256;
 

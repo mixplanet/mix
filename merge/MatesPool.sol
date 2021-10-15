@@ -2,80 +2,6 @@ pragma solidity ^0.5.6;
 
 
 /**
- * @dev Contract module which provides a basic access control mechanism, where
- * there is an account (an owner) that can be granted exclusive access to
- * specific functions.
- *
- * This module is used through inheritance. It will make available the modifier
- * `onlyOwner`, which can be aplied to your functions to restrict their use to
- * the owner.
- */
-contract Ownable {
-    address payable private _owner;
-
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-    /**
-     * @dev Initializes the contract setting the deployer as the initial owner.
-     */
-    constructor () internal {
-        _owner = msg.sender;
-        emit OwnershipTransferred(address(0), _owner);
-    }
-
-    /**
-     * @dev Returns the address of the current owner.
-     */
-    function owner() public view returns (address payable) {
-        return _owner;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(isOwner(), "Ownable: caller is not the owner");
-        _;
-    }
-
-    /**
-     * @dev Returns true if the caller is the current owner.
-     */
-    function isOwner() public view returns (bool) {
-        return msg.sender == _owner;
-    }
-
-    /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions anymore. Can only be called by the current owner.
-     *
-     * > Note: Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
-     */
-    function renounceOwnership() public onlyOwner {
-        emit OwnershipTransferred(_owner, address(0));
-        _owner = address(0);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
-    function transferOwnership(address payable newOwner) public onlyOwner {
-        _transferOwnership(newOwner);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     */
-    function _transferOwnership(address payable newOwner) internal {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
-        emit OwnershipTransferred(_owner, newOwner);
-        _owner = newOwner;
-    }
-}
-
-/**
  * @dev Interface of the KIP-13 standard, as defined in the
  * [KIP-13](http://kips.klaytn.com/KIPs/kip-13-interface_query_standard).
  *
@@ -143,6 +69,17 @@ contract IKIP17 is IKIP13 {
 
 
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public;
+}
+
+/**
+ * @title KIP-17 Non-Fungible Token Standard, optional enumeration extension
+ * @dev See http://kips.klaytn.com/KIPs/kip-17-non_fungible_token
+ */
+contract IKIP17Enumerable is IKIP17 {
+    function totalSupply() public view returns (uint256);
+    function tokenOfOwnerByIndex(address owner, uint256 index) public view returns (uint256 tokenId);
+
+    function tokenByIndex(uint256 index) public view returns (uint256);
 }
 
 /**
@@ -389,27 +326,16 @@ library SignedSafeMath {
     }
 }
 
-interface ITurntableKIP17Listeners {
+interface IKIP17Dividend {
 
     event Distribute(address indexed by, uint256 distributed);
-    event Claim(uint256 indexed turntableId, uint256 indexed id, uint256 claimed);
-    
-    event Listen(uint256 indexed turntableId, address indexed owner, uint256 indexed id);
-    event Unlisten(uint256 indexed turntableId, address indexed owner, uint256 indexed id);
+    event Claim(uint256 indexed id, uint256 claimed);
 
-    event SetTurntableFee(uint256 fee);
-    
-    function shares(uint256 turntableId, uint256 id) external view returns (uint256);
-    function accumulativeOf(uint256 turntableId, uint256 id) external view returns (uint256);
-    function realClaimedOf(uint256 turntableId, uint256 id) external view returns (uint256);
-    function claimableOf(uint256 turntableId, uint256 id) external view returns (uint256);
-    function claim(uint256 turntableId, uint256[] calldata ids) external;
-
-    function listen(uint256 turntableId, uint256[] calldata ids) external;
-    function unlisten(uint256 turntableId, uint256[] calldata ids) external;
-    
-    function listeners(uint256 turntableId, uint256 index) external view returns (uint256);
-    function listenerCount(uint256 turntableId) external view returns (uint256);
+    function pid() external view returns (uint256);
+    function accumulativeOf() external view returns (uint256);
+    function claimedOf(uint256 id) external view returns (uint256);
+    function claimableOf(uint256 id) external view returns (uint256);
+    function claim(uint256[] calldata ids) external returns (uint256);
 }
 
 /**
@@ -551,252 +477,93 @@ interface IMixEmitter {
     function updatePool(uint256 pid) external;
 }
 
-interface ITurntables {
-    
-    event AddType(
-        uint256 price,
-        uint256 destroyReturn,
-        uint256 volume,
-        uint256 lifetime
-    );
-
-    event AllowType(uint256 indexed typeId);
-    event DenyType(uint256 indexed typeId);
-    event ChangeChargingEfficiency(uint256 value);
-
-    event Buy(address indexed owner, uint256 indexed turntableId);
-    event Charge(address indexed owner, uint256 indexed turntableId, uint256 amount);
-    event Destroy(address indexed owner, uint256 indexed turntableId);
-
-    event Distribute(address indexed by, uint256 distributed);
-    event Claim(uint256 indexed turntableId, uint256 claimed);
-
-    function types(uint256 typeId) external view returns (
-        uint256 price,
-        uint256 destroyReturn,
-        uint256 volume,
-        uint256 lifetime
-    );
-
-    function addType(
-        uint256 price,
-        uint256 destroyReturn,
-        uint256 volume,
-        uint256 lifetime
-    ) external returns (uint256 typeId);
-
-    function totalVolume() external view returns (uint256);
-    function typeCount() external view returns (uint256);
-    function allowType(uint256 typeId) external;
-    function denyType(uint256 typeId) external;
-
-    function turntables(uint256 turntableId) external view returns (
-        address owner,
-        uint256 typeId,
-        uint256 endBlock,
-        uint256 lastClaimedBlock
-    );
-
-    function buy(uint256 typeId) external returns (uint256 turntableId);
-    function turntableLength() external view returns (uint256);
-    function ownerOf(uint256 turntableId) external view returns (address);
-    function exists(uint256 turntableId) external view returns (bool);
-    function charge(uint256 turntableId, uint256 amount) external;
-    function destroy(uint256 turntableId) external;
-
-    function pid() external view returns (uint256);
-    function accumulativeOf(uint256 turntableId) external view returns (uint256);
-    function claimedOf(uint256 turntableId) external view returns (uint256);
-    function claimableOf(uint256 turntableId) external view returns (uint256);
-    function claim(uint256[] calldata turntableIds) external returns (uint256);
-}
-
-contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
+contract MatesPool is IKIP17Dividend {
     using SafeMath for uint256;
     using SignedSafeMath for int256;
 
     IMixEmitter public mixEmitter;
     IMix public mix;
     uint256 public pid;
-    ITurntables public turntables;
-    IKIP17 public nft;
+    IKIP17Enumerable public nft;
+    uint256 public maxNFTSupply;
 
     constructor(
         IMixEmitter _mixEmitter,
         uint256 _pid,
-        ITurntables _turntables,
-        IKIP17 _nft
+        IKIP17Enumerable _nft,
+        uint256 _maxNFTSupply
     ) public {
         mixEmitter = _mixEmitter;
         mix = _mixEmitter.mix();
         pid = _pid;
-        turntables = _turntables;
         nft = _nft;
+        maxNFTSupply = _maxNFTSupply;
     }
 
-    uint256 private currentBalance = 0;
-    uint256 public totalShares = 0;
-    mapping(uint256 => mapping(uint256 => bool)) public shares;
+    uint256 internal currentBalance = 0;
 
-    mapping(uint256 => uint256[]) public listeners;
-    mapping(uint256 => uint256) private listenersIndex;
+    uint256 internal constant pointsMultiplier = 2**128;
+    uint256 internal pointsPerShare = 0;
+    mapping(uint256 => uint256) internal claimed;
 
-    uint256 public turntableFee = 300; // 1e4
-    mapping(uint256 => uint256) public listeningTo;
-    mapping(uint256 => bool) public listening;
-
-    uint256 private constant pointsMultiplier = 2**128;
-    uint256 private pointsPerShare = 0;
-    mapping(uint256 => mapping(uint256 => int256)) private pointsCorrection;
-    mapping(uint256 => mapping(uint256 => uint256)) private claimed;
-    mapping(uint256 => mapping(uint256 => uint256)) private realClaimed;
-
-    function setTurntableFee(uint256 fee) external onlyOwner {
-        require(fee < 1e4);
-        turntableFee = fee;
-        emit SetTurntableFee(fee);
-    }
-
-    function updateBalance() private {
-        if (totalShares > 0) {
+    function updateBalance() internal {
+        if (maxNFTSupply > 0) {
             mixEmitter.updatePool(pid);
             uint256 balance = mix.balanceOf(address(this));
             uint256 value = balance.sub(currentBalance);
             if (value > 0) {
-                pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(totalShares));
+                pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(maxNFTSupply));
                 emit Distribute(msg.sender, value);
             }
             currentBalance = balance;
-        } else {
-            mixEmitter.updatePool(pid);
-            uint256 balance = mix.balanceOf(address(this));
-            uint256 value = balance.sub(currentBalance);
-            if (value > 0) mix.burn(value);
         }
     }
 
-    function realClaimedOf(uint256 turntableId, uint256 id) public view returns (uint256) {
-        return realClaimed[turntableId][id];
+    function claimedOf(uint256 id) public view returns (uint256) {
+        return claimed[id];
     }
 
-    function accumulativeOf(uint256 turntableId, uint256 id) public view returns (uint256) {
+    function accumulativeOf() public view returns (uint256) {
         uint256 _pointsPerShare = pointsPerShare;
-        if (totalShares > 0) {
+        if (maxNFTSupply > 0) {
             uint256 balance = mixEmitter.pendingMix(pid).add(mix.balanceOf(address(this)));
             uint256 value = balance.sub(currentBalance);
             if (value > 0) {
-                _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(totalShares));
+                _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(maxNFTSupply));
             }
-            return
-                uint256(int256(shares[turntableId][id] == true ? _pointsPerShare : 0).add(pointsCorrection[turntableId][id]))
-                    .div(pointsMultiplier);
+            return uint256(int256(_pointsPerShare)).div(pointsMultiplier);
         }
         return 0;
     }
 
-    function claimableOf(uint256 turntableId, uint256 id) external view returns (uint256) {
-        return
-            accumulativeOf(turntableId, id).sub(claimed[turntableId][id]).mul(uint256(1e4).sub(turntableFee)).div(1e4);
+    function claimableOf(uint256 id) external view returns (uint256) {
+        require(id < maxNFTSupply);
+        return accumulativeOf().sub(claimed[id]);
     }
 
-    function _accumulativeOf(uint256 turntableId, uint256 id) private view returns (uint256) {
-        return
-            uint256(int256(shares[turntableId][id] == true ? pointsPerShare : 0).add(pointsCorrection[turntableId][id])).div(
-                pointsMultiplier
-            );
+    function _accumulativeOf() internal view returns (uint256) {
+        return uint256(int256(pointsPerShare)).div(pointsMultiplier);
     }
 
-    function _claimableOf(uint256 turntableId, uint256 id) private view returns (uint256) {
-        return _accumulativeOf(turntableId, id).sub(claimed[turntableId][id]);
+    function _claimableOf(uint256 id) internal view returns (uint256) {
+        return _accumulativeOf().sub(claimed[id]);
     }
 
-    function claim(uint256 turntableId, uint256[] calldata ids) external {
+    function claim(uint256[] calldata ids) external returns (uint256 totalClaimable) {
         updateBalance();
         uint256 length = ids.length;
-        uint256 totalClaimable = 0;
-        for (uint256 i = 0; i < length; i = i + 1) {
-            uint256 claimable = _claim(turntableId, ids[i]);
-            totalClaimable = totalClaimable.add(claimable);
-        }
-        currentBalance = mix.balanceOf(address(this));
-    }
-
-    function _claim(uint256 turntableId, uint256 id) internal returns (uint256 claimable) {
-        require(nft.ownerOf(id) == msg.sender && listening[id] && listeningTo[id] == turntableId);
-        claimable = _claimableOf(turntableId, id);
-        if (claimable > 0) {
-            claimed[turntableId][id] = claimed[turntableId][id].add(claimable);
-            emit Claim(turntableId, id, claimable);
-            uint256 fee = claimable.mul(turntableFee).div(1e4);
-            if (turntables.exists(turntableId)) {
-                mix.transfer(turntables.ownerOf(turntableId), fee);
-            } else {
-                mix.burn(fee);
-            }
-            mix.transfer(msg.sender, claimable.sub(fee));
-            realClaimed[turntableId][id] = realClaimed[turntableId][id].add(claimable.sub(fee));
-        }
-    }
-
-    function _unlisten(uint256 turntableId, uint256 id) internal {
-        uint256 lastIndex = listeners[turntableId].length.sub(1);
-        uint256 index = listenersIndex[id];
-        if (index != lastIndex) {
-            uint256 last = listeners[turntableId][lastIndex];
-            listeners[turntableId][index] = last;
-            listenersIndex[last] = index;
-        }
-        listeners[turntableId].length--;
-        
-        _claim(turntableId, id);
-        shares[turntableId][id] = false;
-        pointsCorrection[turntableId][id] = pointsCorrection[turntableId][id].add(int256(pointsPerShare));
-        emit Unlisten(turntableId, msg.sender, id);
-        currentBalance = mix.balanceOf(address(this));
-    }
-
-    function listen(uint256 turntableId, uint256[] calldata ids) external {
-        require(turntables.exists(turntableId));
-        updateBalance();
-        uint256 length = ids.length;
-        totalShares = totalShares.add(length);
         for (uint256 i = 0; i < length; i = i + 1) {
             uint256 id = ids[i];
-            require(nft.ownerOf(id) == msg.sender);
-
-            if (listening[id] && listeningTo[id] != turntableId) {
-                totalShares = totalShares.sub(1);
-                _unlisten(listeningTo[id], id);
-            } else {
-                require(!listening[id]);
+            require(id < maxNFTSupply && nft.ownerOf(id) == msg.sender);
+            uint256 claimable = _claimableOf(id);
+            if (claimable > 0) {
+                claimed[id] = claimed[id].add(claimable);
+                emit Claim(id, claimable);
+                totalClaimable = totalClaimable.add(claimable);
             }
-
-            shares[turntableId][id] = true;
-            
-            listenersIndex[id] = listeners[turntableId].length;
-            listeners[turntableId].push(id);
-            
-            pointsCorrection[turntableId][id] = pointsCorrection[turntableId][id].sub(int256(pointsPerShare));
-            listeningTo[id] = turntableId;
-            listening[id] = true;
-            emit Listen(turntableId, msg.sender, id);
         }
-    }
-
-    function unlisten(uint256 turntableId, uint256[] calldata ids) external {
-        updateBalance();
-        uint256 length = ids.length;
-        totalShares = totalShares.sub(length);
-        for (uint256 i = 0; i < length; i = i + 1) {
-            uint256 id = ids[i];
-            require(listening[id] && listeningTo[id] == turntableId);
-            _unlisten(turntableId, id);
-            delete listeningTo[id];
-            delete listening[id];
-        }
-    }
-
-    function listenerCount(uint256 turntableId) external view returns (uint256) {
-        return listeners[turntableId].length;
+        mix.burnFrom(msg.sender, totalClaimable.div(10));
+        mix.transfer(msg.sender, totalClaimable);
+        currentBalance = currentBalance.sub(totalClaimable);
     }
 }
