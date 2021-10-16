@@ -72,17 +72,6 @@ contract IKIP17 is IKIP13 {
 }
 
 /**
- * @title KIP-17 Non-Fungible Token Standard, optional enumeration extension
- * @dev See http://kips.klaytn.com/KIPs/kip-17-non_fungible_token
- */
-contract IKIP17Enumerable is IKIP17 {
-    function totalSupply() public view returns (uint256);
-    function tokenOfOwnerByIndex(address owner, uint256 index) public view returns (uint256 tokenId);
-
-    function tokenByIndex(uint256 index) public view returns (uint256);
-}
-
-/**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
  * checks.
  *
@@ -484,13 +473,13 @@ contract KIP17Dividend is IKIP17Dividend {
     IMixEmitter public mixEmitter;
     IMix public mix;
     uint256 public pid;
-    IKIP17Enumerable public nft;
+    IKIP17 public nft;
     uint256 public maxNFTSupply;
 
     constructor(
         IMixEmitter _mixEmitter,
         uint256 _pid,
-        IKIP17Enumerable _nft,
+        IKIP17 _nft,
         uint256 _maxNFTSupply
     ) public {
         mixEmitter = _mixEmitter;

@@ -1,7 +1,7 @@
 pragma solidity ^0.5.6;
 
 import "./klaytn-contracts/ownership/Ownable.sol";
-import "./klaytn-contracts/token/KIP17/IKIP17Enumerable.sol";
+import "./klaytn-contracts/token/KIP17/IKIP17.sol";
 import "./klaytn-contracts/math/SafeMath.sol";
 import "./libraries/SignedSafeMath.sol";
 import "./interfaces/ITurntableKIP17Listeners.sol";
@@ -17,13 +17,13 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
     IMix public mix;
     uint256 public pid;
     ITurntables public turntables;
-    IKIP17Enumerable public nft;
+    IKIP17 public nft;
 
     constructor(
         IMixEmitter _mixEmitter,
         uint256 _pid,
         ITurntables _turntables,
-        IKIP17Enumerable _nft
+        IKIP17 _nft
     ) public {
         mixEmitter = _mixEmitter;
         mix = _mixEmitter.mix();
