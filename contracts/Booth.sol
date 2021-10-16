@@ -25,6 +25,7 @@ contract Booth is IBooth, KIP7, KIP7Metadata("DSC Mixset", "MIXSET", 18) {
             _mint(msg.sender, what);
         }
         mix.transferFrom(msg.sender, address(this), amount);
+        emit Stake(msg.sender, amount);
     }
 
     function unstake(uint256 share) external {
@@ -32,5 +33,6 @@ contract Booth is IBooth, KIP7, KIP7Metadata("DSC Mixset", "MIXSET", 18) {
         uint256 what = share.mul(mix.balanceOf(address(this))).div(totalShares);
         _burn(msg.sender, share);
         mix.transfer(msg.sender, what);
+        emit Unstake(msg.sender, share);
     }
 }
