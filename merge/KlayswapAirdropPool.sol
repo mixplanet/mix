@@ -352,6 +352,10 @@ contract KlayswapAirdropPool is Ownable, IKlayswapAirdropPool {
 
     function withdraw(address tokenAddr) external onlyOwner {
         operator.withdraw(tokenAddr);
+        uint256 balance = IKIP7(tokenAddr).balanceOf(address(this));
+        if (balance > 0) {
+            IKIP7(tokenAddr).transfer(msg.sender, balance);
+        }
     }
 
     function getAirdropStat() external view returns (
