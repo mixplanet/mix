@@ -234,7 +234,7 @@ describe("TurntableKIP17Listeners", () => {
         );
     });
 
-    it("should be that if a nft which is listening is transfered to another user, the new owner can claimed accumulated rewards but the previous owner can't", async () => {
+    it("should be that if a nft which is listening is transferred to another user, the new owner can claim accumulated rewards but the previous owner can't", async () => {
         const { table17Listeners, turntables, mix, nft, alice, bob, erin } = await setupTest();
 
         await turntables.addType(1000, 500, 10, 300);
@@ -367,7 +367,7 @@ describe("TurntableKIP17Listeners", () => {
         await checkMixBalance(mix, [erin, bob, carol], [erinBalance.add(fee), claimedB, claimedC]);
     });
 
-    it("should be that fee goes to the turntable's owner even if it's life is over", async () => {
+    it("should be that fee goes to the turntable's owner even if its life is over", async () => {
         const { table17Listeners, turntables, mix, bob, erin } = await setupTest();
 
         await turntables.addType(1000, 500, 10, 50);
@@ -406,7 +406,7 @@ describe("TurntableKIP17Listeners", () => {
         await expect(() => table17Listeners.connect(erin).claim(0, [10])).to.changeTokenBalance(mix, erin, claimableB);
     });
 
-    it("should be that listeners indexing works propely", async () => {
+    it("should be that listeners indexing works properly", async () => {
         const { table17Listeners, turntables, mix, alice, bob, erin } = await setupTest();
 
         await turntables.addType(1000, 500, 10, 50);
