@@ -5,6 +5,7 @@ import "./IKlayswapAirdropOperator.sol";
 interface IKlayswapAirdropPool {
 
     event SetOperator(IKlayswapAirdropOperator indexed operator);
+    event SetKeeper(address indexed keeper);
 
     function pid() external view returns (uint256);
     function operator() external view returns (IKlayswapAirdropOperator);
