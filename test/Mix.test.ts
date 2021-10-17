@@ -69,7 +69,7 @@ describe("Mix", () => {
         await mix.connect(alice).mint(alice.address, 10000);
     });
 
-    it("should be that 0.3% of the amount of buring token goes to the booth", async () => {
+    it("should be that 0.3% of the amount of burning token goes to the booth", async () => {
         const { deployer, alice, mix, booth } = await setupTest();
 
         await mix.setBooth(booth.address);

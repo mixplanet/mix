@@ -282,7 +282,7 @@ describe("TurntableKIP7Listeners", () => {
         await checkMixBalance(mix, [erin, bob, carol], [erinBalance.add(fee), claimedB, claimedC]);
     });
 
-    it("should be that fee goes to the turntable's owner even if it's life is over", async () => {
+    it("should be that fee goes to the turntable's owner even if its life is over", async () => {
         const { table7Listeners, turntables, mix, bob, erin } = await setupTest();
 
         await turntables.addType(1000, 500, 10, 50);

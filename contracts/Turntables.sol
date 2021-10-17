@@ -127,9 +127,9 @@ contract Turntables is Ownable, ITurntables {
         turntableIds[0] = turntableId;
         claim(turntableIds);
 
-        uint256 chagedLifetime = _type.lifetime.mul(amount).mul(chargingEfficiency).div(100).div(_type.price);
+        uint256 changedLifetime = _type.lifetime.mul(amount).mul(chargingEfficiency).div(100).div(_type.price);
         uint256 oldEndBlock = turntable.endBlock;
-        turntable.endBlock = (block.number < oldEndBlock ? oldEndBlock : block.number).add(chagedLifetime);
+        turntable.endBlock = (block.number < oldEndBlock ? oldEndBlock : block.number).add(changedLifetime);
 
         mix.burnFrom(msg.sender, amount);
         currentBalance = mix.balanceOf(address(this));
