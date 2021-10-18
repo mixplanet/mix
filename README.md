@@ -14,6 +14,10 @@ DogeSoundClub Mix 스마트계약 저장소
 - DevFundPool(KIP7StakingPool): [0x91471263590FB259bf6208ba414bf17B0126Bbb7](https://scope.klaytn.com/account/0x91471263590FB259bf6208ba414bf17B0126Bbb7)
 - BurnPool: [0x4b1e4c30B12B8564686FF30F608a18Abfbd7adBc](https://scope.klaytn.com/account/0x4b1e4c30B12B8564686FF30F608a18Abfbd7adBc)
 - MatesPool: [0xbc9C42267037786f42831d4f36D629A3888c9b4a](https://scope.klaytn.com/account/0xbc9C42267037786f42831d4f36D629A3888c9b4a)
+- Klay-MIX Operator: [0x01dCd307E4337bc2CA1E774828Fb0aEB64CEF860](https://scope.klaytn.com/account/0x01dCd307E4337bc2CA1E774828Fb0aEB64CEF860)
+- KSP-MIX Operator: [0x56E7Ba8ad66B0920397F36d1F5c3B3C51F0e23d8](https://scope.klaytn.com/account/0x56E7Ba8ad66B0920397F36d1F5c3B3C51F0e23d8)
+- Klay-MIX Pool: [0x0c04A7D66F8b37fcAd79887529F79b3Fa4650B6F](https://scope.klaytn.com/account/0x0c04A7D66F8b37fcAd79887529F79b3Fa4650B6F)
+- KSP-MIX Pool: [0x19ADFF82C252B58B4df766721830ADEA0fa64d45](https://scope.klaytn.com/account/0x19ADFF82C252B58B4df766721830ADEA0fa64d45)
 
 ### Testnet
 - Mix: [0xAe0a2e1DA2469FFdf8308160eE64Fe3656d9D9D0](https://baobab.scope.klaytn.com/token/0xAe0a2e1DA2469FFdf8308160eE64Fe3656d9D9D0)
