@@ -18,6 +18,7 @@ DogeSoundClub Mix 스마트계약 저장소
 - KSP-MIX Operator: [0x56E7Ba8ad66B0920397F36d1F5c3B3C51F0e23d8](https://scope.klaytn.com/account/0x56E7Ba8ad66B0920397F36d1F5c3B3C51F0e23d8)
 - Klay-MIX Pool: [0x0c04A7D66F8b37fcAd79887529F79b3Fa4650B6F](https://scope.klaytn.com/account/0x0c04A7D66F8b37fcAd79887529F79b3Fa4650B6F)
 - KSP-MIX Pool: [0x19ADFF82C252B58B4df766721830ADEA0fa64d45](https://scope.klaytn.com/account/0x19ADFF82C252B58B4df766721830ADEA0fa64d45)
+- MixSender: [0xDeE2b8539c2321450a99f6728633DEf8d069262F](https://scope.klaytn.com/account/0xDeE2b8539c2321450a99f6728633DEf8d069262F)
 
 ### Testnet
 - Mix: [0xAe0a2e1DA2469FFdf8308160eE64Fe3656d9D9D0](https://baobab.scope.klaytn.com/token/0xAe0a2e1DA2469FFdf8308160eE64Fe3656d9D9D0)
