@@ -2,6 +2,76 @@ pragma solidity ^0.5.6;
 
 
 /**
+ * @dev Interface of the KIP-13 standard, as defined in the
+ * [KIP-13](http://kips.klaytn.com/KIPs/kip-13-interface_query_standard).
+ *
+ * Implementers can declare support of contract interfaces, which can then be
+ * queried by others.
+ *
+ * For an implementation, see `KIP13`.
+ */
+interface IKIP13 {
+    /**
+     * @dev Returns true if this contract implements the interface defined by
+     * `interfaceId`. See the corresponding
+     * [KIP-13 section](http://kips.klaytn.com/KIPs/kip-13-interface_query_standard#how-interface-identifiers-are-defined)
+     * to learn more about how these ids are created.
+     *
+     * This function call must use less than 30 000 gas.
+     */
+    function supportsInterface(bytes4 interfaceId) external view returns (bool);
+}
+
+/**
+ * @dev Required interface of an KIP17 compliant contract.
+ */
+contract IKIP17 is IKIP13 {
+    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+
+    /**
+     * @dev Returns the number of NFTs in `owner`'s account.
+     */
+    function balanceOf(address owner) public view returns (uint256 balance);
+
+    /**
+     * @dev Returns the owner of the NFT specified by `tokenId`.
+     */
+    function ownerOf(uint256 tokenId) public view returns (address owner);
+
+    /**
+     * @dev Transfers a specific NFT (`tokenId`) from one account (`from`) to
+     * another (`to`).
+     *
+     * Requirements:
+     * - `from`, `to` cannot be zero.
+     * - `tokenId` must be owned by `from`.
+     * - If the caller is not `from`, it must be have been allowed to move this
+     * NFT by either `approve` or `setApproveForAll`.
+     */
+    function safeTransferFrom(address from, address to, uint256 tokenId) public;
+
+    /**
+     * @dev Transfers a specific NFT (`tokenId`) from one account (`from`) to
+     * another (`to`).
+     *
+     * Requirements:
+     * - If the caller is not `from`, it must be approved to move this NFT by
+     * either `approve` or `setApproveForAll`.
+     */
+    function transferFrom(address from, address to, uint256 tokenId) public;
+    function approve(address to, uint256 tokenId) public;
+    function getApproved(uint256 tokenId) public view returns (address operator);
+
+    function setApprovalForAll(address operator, bool _approved) public;
+    function isApprovedForAll(address owner, address operator) public view returns (bool);
+
+
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public;
+}
+
+/**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
  * checks.
  *
@@ -245,99 +315,16 @@ library SignedSafeMath {
     }
 }
 
-/**
- * @dev Contract module which provides a basic access control mechanism, where
- * there is an account (an owner) that can be granted exclusive access to
- * specific functions.
- *
- * This module is used through inheritance. It will make available the modifier
- * `onlyOwner`, which can be aplied to your functions to restrict their use to
- * the owner.
- */
-contract Ownable {
-    address payable private _owner;
+interface IKIP17Dividend {
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event Distribute(address indexed by, uint256 distributed);
+    event Claim(uint256 indexed id, uint256 claimed);
 
-    /**
-     * @dev Initializes the contract setting the deployer as the initial owner.
-     */
-    constructor () internal {
-        _owner = msg.sender;
-        emit OwnershipTransferred(address(0), _owner);
-    }
-
-    /**
-     * @dev Returns the address of the current owner.
-     */
-    function owner() public view returns (address payable) {
-        return _owner;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(isOwner(), "Ownable: caller is not the owner");
-        _;
-    }
-
-    /**
-     * @dev Returns true if the caller is the current owner.
-     */
-    function isOwner() public view returns (bool) {
-        return msg.sender == _owner;
-    }
-
-    /**
-     * @dev Leaves the contract without owner. It will not be possible to call
-     * `onlyOwner` functions anymore. Can only be called by the current owner.
-     *
-     * > Note: Renouncing ownership will leave the contract without an owner,
-     * thereby removing any functionality that is only available to the owner.
-     */
-    function renounceOwnership() public onlyOwner {
-        emit OwnershipTransferred(_owner, address(0));
-        _owner = address(0);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     * Can only be called by the current owner.
-     */
-    function transferOwnership(address payable newOwner) public onlyOwner {
-        _transferOwnership(newOwner);
-    }
-
-    /**
-     * @dev Transfers ownership of the contract to a new account (`newOwner`).
-     */
-    function _transferOwnership(address payable newOwner) internal {
-        require(newOwner != address(0), "Ownable: new owner is the zero address");
-        emit OwnershipTransferred(_owner, newOwner);
-        _owner = newOwner;
-    }
-}
-
-/**
- * @dev Interface of the KIP-13 standard, as defined in the
- * [KIP-13](http://kips.klaytn.com/KIPs/kip-13-interface_query_standard).
- *
- * Implementers can declare support of contract interfaces, which can then be
- * queried by others.
- *
- * For an implementation, see `KIP13`.
- */
-interface IKIP13 {
-    /**
-     * @dev Returns true if this contract implements the interface defined by
-     * `interfaceId`. See the corresponding
-     * [KIP-13 section](http://kips.klaytn.com/KIPs/kip-13-interface_query_standard#how-interface-identifiers-are-defined)
-     * to learn more about how these ids are created.
-     *
-     * This function call must use less than 30 000 gas.
-     */
-    function supportsInterface(bytes4 interfaceId) external view returns (bool);
+    function pid() external view returns (uint256);
+    function accumulativeOf() external view returns (uint256);
+    function claimedOf(uint256 id) external view returns (uint256);
+    function claimableOf(uint256 id) external view returns (uint256);
+    function claim(uint256[] calldata ids) external returns (uint256);
 }
 
 /**
@@ -479,313 +466,93 @@ interface IMixEmitter {
     function updatePool(uint256 pid) external;
 }
 
-interface ITurntables {
-    
-    event AddType(
-        uint256 price,
-        uint256 destroyReturn,
-        uint256 volume,
-        uint256 lifetime
-    );
-
-    event AllowType(uint256 indexed typeId);
-    event DenyType(uint256 indexed typeId);
-    event ChangeChargingEfficiency(uint256 value);
-
-    event Buy(address indexed owner, uint256 indexed turntableId);
-    event Charge(address indexed owner, uint256 indexed turntableId, uint256 amount);
-    event Destroy(address indexed owner, uint256 indexed turntableId);
-
-    event Distribute(address indexed by, uint256 distributed);
-    event Claim(uint256 indexed turntableId, uint256 claimed);
-
-    function types(uint256 typeId) external view returns (
-        uint256 price,
-        uint256 destroyReturn,
-        uint256 volume,
-        uint256 lifetime
-    );
-
-    function addType(
-        uint256 price,
-        uint256 destroyReturn,
-        uint256 volume,
-        uint256 lifetime
-    ) external returns (uint256 typeId);
-
-    function totalVolume() external view returns (uint256);
-    function typeCount() external view returns (uint256);
-    function allowType(uint256 typeId) external;
-    function denyType(uint256 typeId) external;
-
-    function turntables(uint256 turntableId) external view returns (
-        address owner,
-        uint256 typeId,
-        uint256 endBlock,
-        uint256 lastClaimedBlock
-    );
-
-    function buy(uint256 typeId) external returns (uint256 turntableId);
-    function turntableLength() external view returns (uint256);
-    function ownerOf(uint256 turntableId) external view returns (address);
-    function exists(uint256 turntableId) external view returns (bool);
-    function charge(uint256 turntableId, uint256 amount) external;
-    function destroy(uint256 turntableId) external;
-
-    function pid() external view returns (uint256);
-    function accumulativeOf(uint256 turntableId) external view returns (uint256);
-    function claimedOf(uint256 turntableId) external view returns (uint256);
-    function claimableOf(uint256 turntableId) external view returns (uint256);
-    function claim(uint256[] calldata turntableIds) external returns (uint256);
-}
-
-contract Turntables is Ownable, ITurntables {
+contract AnimalsPunksV2Pool is IKIP17Dividend {
     using SafeMath for uint256;
     using SignedSafeMath for int256;
 
     IMixEmitter public mixEmitter;
     IMix public mix;
     uint256 public pid;
+    IKIP17 public nft;
+    uint256 public maxNFTSupply;
 
-    constructor(IMixEmitter _mixEmitter, uint256 _pid) public {
-        require(_mixEmitter.started());
+    constructor(
+        IMixEmitter _mixEmitter,
+        uint256 _pid,
+        IKIP17 _nft,
+        uint256 _maxNFTSupply
+    ) public {
         mixEmitter = _mixEmitter;
         mix = _mixEmitter.mix();
         pid = _pid;
+        nft = _nft;
+        maxNFTSupply = _maxNFTSupply;
     }
 
     uint256 internal currentBalance = 0;
-    uint256 public totalVolume = 0;
 
     uint256 internal constant pointsMultiplier = 2**128;
     uint256 internal pointsPerShare = 0;
-    mapping(uint256 => int256) internal pointsCorrection;
     mapping(uint256 => uint256) internal claimed;
-    mapping(uint256 => uint256) internal realClaimed;
-
-    struct Type {
-        uint256 price;
-        uint256 destroyReturn;
-        uint256 volume;
-        uint256 lifetime;
-    }
-    Type[] public types;
-    mapping(uint256 => bool) public typeWhitelist;
-
-    struct Turntable {
-        address owner;
-        uint256 typeId;
-        uint256 endBlock;
-        uint256 lastClaimedBlock;
-    }
-    Turntable[] public turntables;
-
-    uint256 public chargingEfficiency = 200; // 1e2
-
-    function addType(
-        uint256 price,
-        uint256 destroyReturn,
-        uint256 volume,
-        uint256 lifetime
-    ) external onlyOwner returns (uint256 typeId) {
-        require(price >= destroyReturn);
-        typeId = types.length;
-        types.push(Type({price: price, destroyReturn: destroyReturn, volume: volume, lifetime: lifetime}));
-        emit AddType(price, destroyReturn, volume, lifetime);
-    }
-
-    function typeCount() external view returns (uint256) {
-        return types.length;
-    }
-
-    function allowType(uint256 typeId) external onlyOwner {
-        typeWhitelist[typeId] = true;
-        emit AllowType(typeId);
-    }
-
-    function denyType(uint256 typeId) external onlyOwner {
-        typeWhitelist[typeId] = false;
-        emit DenyType(typeId);
-    }
-
-    function setChargingEfficiency(uint256 value) external onlyOwner {
-        chargingEfficiency = value;
-        emit ChangeChargingEfficiency(value);
-    }
-
-    function buy(uint256 typeId) external returns (uint256 turntableId) {
-        require(typeWhitelist[typeId]);
-        Type memory _type = types[typeId];
-        turntableId = turntables.length;
-        turntables.push(
-            Turntable({
-                owner: msg.sender,
-                typeId: typeId,
-                endBlock: block.number.add(_type.lifetime),
-                lastClaimedBlock: block.number
-            })
-        );
-
-        updateBalance();
-        totalVolume = totalVolume.add(_type.volume);
-        pointsCorrection[turntableId] = int256(pointsPerShare.mul(_type.volume)).mul(-1);
-
-        mix.transferFrom(msg.sender, address(this), _type.price);
-        currentBalance = mix.balanceOf(address(this));
-        emit Buy(msg.sender, turntableId);
-    }
-
-    function turntableLength() external view returns (uint256) {
-        return turntables.length;
-    }
-
-    function ownerOf(uint256 turntableId) public view returns (address) {
-        return turntables[turntableId].owner;
-    }
-
-    function exists(uint256 turntableId) external view returns (bool) {
-        return turntables[turntableId].owner != address(0);
-    }
-
-    function charge(uint256 turntableId, uint256 amount) external {
-        require(amount > 0);
-
-        Turntable storage turntable = turntables[turntableId];
-        require(turntable.owner == msg.sender);
-        Type memory _type = types[turntable.typeId];
-
-        uint256[] memory turntableIds = new uint256[](1);
-        turntableIds[0] = turntableId;
-        claim(turntableIds);
-
-        uint256 changedLifetime = _type.lifetime.mul(amount).mul(chargingEfficiency).div(100).div(_type.price);
-        uint256 oldEndBlock = turntable.endBlock;
-        turntable.endBlock = (block.number < oldEndBlock ? oldEndBlock : block.number).add(changedLifetime);
-
-        mix.burnFrom(msg.sender, amount);
-        currentBalance = mix.balanceOf(address(this));
-        emit Charge(msg.sender, turntableId, amount);
-    }
-
-    function destroy(uint256 turntableId) external {
-        Turntable memory turntable = turntables[turntableId];
-        require(turntable.owner == msg.sender);
-
-        uint256[] memory turntableIds = new uint256[](1);
-        turntableIds[0] = turntableId;
-        claim(turntableIds);
-
-        Type memory _type = types[turntable.typeId];
-        totalVolume = totalVolume.sub(_type.volume);
-        delete pointsCorrection[turntableId];
-
-        mix.transfer(msg.sender, _type.destroyReturn);
-        mix.burn(_type.price - _type.destroyReturn);
-        delete turntables[turntableId];
-
-        currentBalance = mix.balanceOf(address(this));
-        emit Destroy(msg.sender, turntableId);
-    }
 
     function updateBalance() internal {
-        if (totalVolume > 0) {
+        if (maxNFTSupply > 0) {
             mixEmitter.updatePool(pid);
             uint256 balance = mix.balanceOf(address(this));
             uint256 value = balance.sub(currentBalance);
             if (value > 0) {
-                pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(totalVolume));
+                pointsPerShare = pointsPerShare.add(value.mul(pointsMultiplier).div(maxNFTSupply));
                 emit Distribute(msg.sender, value);
             }
-        } else {
-            mixEmitter.updatePool(pid);
-            uint256 balance = mix.balanceOf(address(this));
-            uint256 value = balance.sub(currentBalance);
-            if (value > 0) mix.burn(value);
+            currentBalance = balance;
         }
     }
 
-    function claimedOf(uint256 turntableId) public view returns (uint256) {
-        return realClaimed[turntableId];
+    function claimedOf(uint256 id) public view returns (uint256) {
+        return claimed[id];
     }
 
-    function accumulativeOf(uint256 turntableId) public view returns (uint256) {
+    function accumulativeOf() public view returns (uint256) {
         uint256 _pointsPerShare = pointsPerShare;
-        if (totalVolume > 0) {
+        if (maxNFTSupply > 0) {
             uint256 balance = mixEmitter.pendingMix(pid).add(mix.balanceOf(address(this)));
             uint256 value = balance.sub(currentBalance);
             if (value > 0) {
-                _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(totalVolume));
+                _pointsPerShare = _pointsPerShare.add(value.mul(pointsMultiplier).div(maxNFTSupply));
             }
-            return
-                uint256(
-                    int256(_pointsPerShare.mul(types[turntables[turntableId].typeId].volume)).add(
-                        pointsCorrection[turntableId]
-                    )
-                ).div(pointsMultiplier);
+            return uint256(int256(_pointsPerShare)).div(pointsMultiplier);
         }
         return 0;
     }
 
-    function claimableOf(uint256 turntableId) external view returns (uint256) {
-        uint256 claimable = accumulativeOf(turntableId).sub(claimed[turntableId]);
-        Turntable memory turntable = turntables[turntableId];
-        if (turntable.endBlock <= turntable.lastClaimedBlock) {
-            return 0;
-        } else if (turntable.endBlock < block.number) {
-            return
-                claimable.mul(turntable.endBlock.sub(turntable.lastClaimedBlock)).div(
-                    block.number.sub(turntable.lastClaimedBlock)
-                );
-        } else {
-            return claimable;
-        }
+    function claimableOf(uint256 id) external view returns (uint256) {
+        require(id >= 1 && id <= maxNFTSupply);
+        return accumulativeOf().sub(claimed[id]);
     }
 
-    function _accumulativeOf(uint256 turntableId) internal view returns (uint256) {
-        return uint256(int256(pointsPerShare.mul(types[turntables[turntableId].typeId].volume)).add(pointsCorrection[turntableId])).div(pointsMultiplier);
+    function _accumulativeOf() internal view returns (uint256) {
+        return uint256(int256(pointsPerShare)).div(pointsMultiplier);
     }
 
-    function _claimableOf(uint256 turntableId) internal view returns (uint256) {
-        return _accumulativeOf(turntableId).sub(claimed[turntableId]);
+    function _claimableOf(uint256 id) internal view returns (uint256) {
+        return _accumulativeOf().sub(claimed[id]);
     }
 
-    function claim(uint256[] memory turntableIds) public returns (uint256 totalClaimable) {
+    function claim(uint256[] calldata ids) external returns (uint256 totalClaimable) {
         updateBalance();
-
-        uint256 toBurn = 0;
-        uint256 length = turntableIds.length;
+        uint256 length = ids.length;
         for (uint256 i = 0; i < length; i = i + 1) {
-            uint256 turntableId = turntableIds[i];
-            require(ownerOf(turntableId) == msg.sender);
-            uint256 claimable = _claimableOf(turntableId);
+            uint256 id = ids[i];
+            require(id >= 1 && id <= maxNFTSupply && nft.ownerOf(id) == msg.sender);
+            uint256 claimable = _claimableOf(id);
             if (claimable > 0) {
-                uint256 realClaimable = 0;
-
-                Turntable memory turntable = turntables[turntableId];
-                if (turntable.endBlock <= turntable.lastClaimedBlock) {
-                    // ignore.
-                } else if (turntable.endBlock < block.number) {
-                    realClaimable = claimable.mul(turntable.endBlock.sub(turntable.lastClaimedBlock)).div(
-                        block.number.sub(turntable.lastClaimedBlock)
-                    );
-                } else {
-                    realClaimable = claimable;
-                }
-
-                toBurn = toBurn.add(claimable.sub(realClaimable));
-                if (realClaimable > 0) {
-                    realClaimed[turntableId] = realClaimed[turntableId].add(realClaimable);
-                    emit Claim(turntableId, realClaimable);
-                    totalClaimable = totalClaimable.add(realClaimable);
-                }
-
-                claimed[turntableId] = claimed[turntableId].add(claimable);
-                turntables[turntableId].lastClaimedBlock = block.number;
+                claimed[id] = claimed[id].add(claimable);
+                emit Claim(id, claimable);
+                totalClaimable = totalClaimable.add(claimable);
             }
         }
-
-        if (totalClaimable > 0) mix.transfer(msg.sender, totalClaimable);
-        if (toBurn > 0) mix.burn(toBurn);
-        currentBalance = mix.balanceOf(address(this));
+        mix.burnFrom(msg.sender, totalClaimable.div(10));
+        mix.transfer(msg.sender, totalClaimable);
+        currentBalance = currentBalance.sub(totalClaimable);
     }
 }

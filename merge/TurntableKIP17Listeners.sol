@@ -713,17 +713,15 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
     function claim(uint256 turntableId, uint256[] calldata ids) external {
         updateBalance();
         uint256 length = ids.length;
-        uint256 totalClaimable = 0;
         for (uint256 i = 0; i < length; i = i + 1) {
-            uint256 claimable = _claim(turntableId, ids[i]);
-            totalClaimable = totalClaimable.add(claimable);
+            _claim(turntableId, ids[i]);
         }
         currentBalance = mix.balanceOf(address(this));
     }
 
-    function _claim(uint256 turntableId, uint256 id) internal returns (uint256 claimable) {
+    function _claim(uint256 turntableId, uint256 id) internal {
         require(nft.ownerOf(id) == msg.sender && listening[id] && listeningTo[id] == turntableId);
-        claimable = _claimableOf(turntableId, id);
+        uint256 claimable = _claimableOf(turntableId, id);
         if (claimable > 0) {
             claimed[turntableId][id] = claimed[turntableId][id].add(claimable);
             emit Claim(turntableId, id, claimable);
