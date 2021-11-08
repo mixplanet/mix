@@ -19,6 +19,7 @@ DogeSoundClub Mix 스마트계약 저장소
 - Klay-MIX Pool: [0x0c04A7D66F8b37fcAd79887529F79b3Fa4650B6F](https://scope.klaytn.com/account/0x0c04A7D66F8b37fcAd79887529F79b3Fa4650B6F)
 - KSP-MIX Pool: [0x19ADFF82C252B58B4df766721830ADEA0fa64d45](https://scope.klaytn.com/account/0x19ADFF82C252B58B4df766721830ADEA0fa64d45)
 - MixSender: [0xDeE2b8539c2321450a99f6728633DEf8d069262F](https://scope.klaytn.com/account/0xDeE2b8539c2321450a99f6728633DEf8d069262F)
+- Turntables: [0xFe605356e99e8662Da61dF32e237D03BEd6A8D54](https://scope.klaytn.com/account/0xFe605356e99e8662Da61dF32e237D03BEd6A8D54)
 
 ### Testnet
 - Mix: [0xAe0a2e1DA2469FFdf8308160eE64Fe3656d9D9D0](https://baobab.scope.klaytn.com/token/0xAe0a2e1DA2469FFdf8308160eE64Fe3656d9D9D0)
@@ -28,6 +29,7 @@ DogeSoundClub Mix 스마트계약 저장소
 - DevFundPool(KIP7StakingPool): [0x43793E818aC2ba1De69C279d571D3e8d7d9Bfb15](https://scope.klaytn.com/account/0x43793E818aC2ba1De69C279d571D3e8d7d9Bfb15)
 - BurnPool: [0xC7995B29d95006f737861DC5288920FAF16e5Ff7](https://scope.klaytn.com/account/0xC7995B29d95006f737861DC5288920FAF16e5Ff7)
 - MatesPool: [0x6f49D139359D0c7Bf44Df4520494A6ABB39434dD](https://scope.klaytn.com/account/0x6f49D139359D0c7Bf44Df4520494A6ABB39434dD)
+- Turntables: [0xB1EFA1E4b2E666cAB233E2241B9DA11d9EA97504](https://scope.klaytn.com/account/0xB1EFA1E4b2E666cAB233E2241B9DA11d9EA97504)
 
 ## License
 [MIT](LICENSE)
