@@ -21,6 +21,9 @@ DogeSoundClub Mix 스마트계약 저장소
 - MixSender: [0xDeE2b8539c2321450a99f6728633DEf8d069262F](https://scope.klaytn.com/account/0xDeE2b8539c2321450a99f6728633DEf8d069262F)
 - Turntables: [0xFe605356e99e8662Da61dF32e237D03BEd6A8D54](https://scope.klaytn.com/account/0xFe605356e99e8662Da61dF32e237D03BEd6A8D54)
 - MixPriceEstimator: [0x637ce9D4B6cb790e81110f1a5D9869E32b8Fbde2](https://scope.klaytn.com/account/0x637ce9D4B6cb790e81110f1a5D9869E32b8Fbde2)
+- TurntableKIP17Listeners(Mates): [0x97245cDC80F1Ca50CD59f37030cdA00805A2dc54](https://baobab.scope.klaytn.com/account/0x97245cDC80F1Ca50CD59f37030cdA00805A2dc54)
+- TurntableKIP7Listeners(Klay-MIX): [0xe5C799A39450F1FFCaDf768b229DB9e13F23bb5E](https://baobab.scope.klaytn.com/account/0xe5C799A39450F1FFCaDf768b229DB9e13F23bb5E)
+- TurntableKIP7Listeners(KSP-MIX): [0x1D3bC75B6D33C5b5DE7D734686bb5404C6454a4d](https://baobab.scope.klaytn.com/account/0x1D3bC75B6D33C5b5DE7D734686bb5404C6454a4d)
 
 ### Testnet
 - Mix: [0xAe0a2e1DA2469FFdf8308160eE64Fe3656d9D9D0](https://baobab.scope.klaytn.com/token/0xAe0a2e1DA2469FFdf8308160eE64Fe3656d9D9D0)

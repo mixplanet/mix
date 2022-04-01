@@ -641,7 +641,7 @@ contract TurntableKIP17Listeners is Ownable, ITurntableKIP17Listeners {
     mapping(uint256 => uint256[]) public listeners;
     mapping(uint256 => uint256) private listenersIndex;
 
-    uint256 public turntableFee = 300; // 1e4
+    uint256 public turntableFee = 3000;
     mapping(uint256 => uint256) public listeningTo;
     mapping(uint256 => bool) public listening;
 
