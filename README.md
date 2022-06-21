@@ -24,6 +24,7 @@ DogeSoundClub Mix 스마트계약 저장소
 - TurntableKIP17Listeners(Mates): [0x97245cDC80F1Ca50CD59f37030cdA00805A2dc54](https://baobab.scope.klaytn.com/account/0x97245cDC80F1Ca50CD59f37030cdA00805A2dc54)
 - TurntableKIP7Listeners(Klay-MIX): [0xe5C799A39450F1FFCaDf768b229DB9e13F23bb5E](https://baobab.scope.klaytn.com/account/0xe5C799A39450F1FFCaDf768b229DB9e13F23bb5E)
 - TurntableKIP7Listeners(KSP-MIX): [0x1D3bC75B6D33C5b5DE7D734686bb5404C6454a4d](https://baobab.scope.klaytn.com/account/0x1D3bC75B6D33C5b5DE7D734686bb5404C6454a4d)
+- EcoPotPool: 0x126634Fad46F1F2Dadf6Cb512534E87B0EA2741f
 
 ### Testnet
 - Mix: [0xAe0a2e1DA2469FFdf8308160eE64Fe3656d9D9D0](https://baobab.scope.klaytn.com/token/0xAe0a2e1DA2469FFdf8308160eE64Fe3656d9D9D0)
